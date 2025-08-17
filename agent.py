@@ -253,13 +253,13 @@ class DevOpsAgentMemoryHooks(HookProvider):
         """Save DevOps Agent interaction after agent response"""
         try:
             messages = event.agent.messages
-            if len(messages) >= 2 and messages[-1]["role"] == "assistant":
+            if len(messages) >= 2 and messages[-1]["role"] == "agent":
                 # Get last user query and agent response
                 user_query = None
                 agent_response = None
 
                 for msg in reversed(messages):
-                    if msg["role"] == "assistant" and not agent_response:
+                    if msg["role"] == "agent" and not agent_response:
                         agent_response = msg["content"][0]["text"]
                     elif (
                         msg["role"] == "user"
@@ -277,7 +277,7 @@ class DevOpsAgentMemoryHooks(HookProvider):
                         session_id=self.session_id,
                         messages=[
                             (user_query, "USER"),
-                            (agent_response, "ASSISTANT"),
+                            (agent_response, "AGENT"),
                         ],
                     )
                     logger.info("Saved DevOps interaction to memory")
