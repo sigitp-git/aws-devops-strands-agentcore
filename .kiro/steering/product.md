@@ -1,0 +1,27 @@
+# AWS DevOps Bot
+
+An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memory. The bot provides expert guidance on AWS infrastructure, operations, and DevOps best practices while maintaining conversation context through persistent memory.
+
+## Core Features
+
+- **AWS Expertise**: Specialized knowledge of AWS services, infrastructure, and DevOps practices
+- **Memory Integration**: Uses Amazon Bedrock AgentCore Memory to remember user preferences and conversation history
+- **Web Search**: Real-time web search capability for current information using DuckDuckGo
+- **Conversational AI**: Powered by Claude Sonnet 4 with optimized temperature settings for technical accuracy
+
+## Target Users
+
+DevOps engineers, cloud architects, and AWS practitioners seeking intelligent assistance with:
+- AWS infrastructure management
+- DevOps workflow optimization  
+- Troubleshooting AWS services
+- Best practices guidance
+- Technical decision support
+
+## Key Capabilities
+
+- Answers AWS technical questions with high accuracy
+- Remembers user preferences and past interactions
+- Provides up-to-date information through web search
+- Maintains professional, helpful tone
+- Focuses on actionable, practical advice
