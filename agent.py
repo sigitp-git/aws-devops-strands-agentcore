@@ -357,13 +357,14 @@ class DevOpsAgentMemoryHooks(HookProvider):
 
                 if user_query and agent_response:
                     # *** AGENTCORE MEMORY USAGE *** - Save the DevOps interaction
+                    # Note: AgentCore Memory requires "ASSISTANT" role, not "AGENT"
                     self.client.create_event(
                         memory_id=self.memory_id,
                         actor_id=self.actor_id,
                         session_id=self.session_id,
                         messages=[
                             (user_query, "USER"),
-                            (agent_response, "AGENT"),
+                            (agent_response, "ASSISTANT"),
                         ],
                     )
                     logger.info("Saved DevOps interaction to memory")
