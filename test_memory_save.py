@@ -59,7 +59,7 @@ def setup_memory_client() -> Tuple[MemoryClient, str]:
     try:
         memory_id = get_ssm_parameter(MEMORY_ID_PARAMETER)
         if not memory_id:
-            raise ValueError(f"No memory ID found in SSM parameter: {MEMORY_ID_PARAMETER}")
+            raise ValueError(f"No memory ID found in SSM parameter: {TestConfig.MEMORY_ID_PARAMETER}")
         
         if not memory_id.strip():
             raise ValueError("Memory ID is empty or contains only whitespace")
@@ -90,7 +90,7 @@ def create_test_event(memory_client: MemoryClient, memory_id: str, session_id: s
         raise ValueError("All parameters (memory_id, session_id, actor_id) must be non-empty")
     
     test_messages = [
-        ("I want to explicitly tell you that my favorite AWS service is Amazon Bedrock. "
+        ("My name is Mushkush, devops_001. I want to explicitly tell you that my favorite AWS service is Amazon Bedrock. "
          "Please remember this preference for future conversations.", "USER"),
         ("I've noted that Amazon Bedrock is your favorite AWS service! That's a great choice - "
          "Bedrock is AWS's fully managed service for building and scaling generative AI applications "
@@ -172,13 +172,13 @@ def display_memories(memories: List[Dict[str, Any]]) -> None:
 def run_memory_creation_test(memory_client: MemoryClient, memory_id: str) -> None:
     """Run the memory creation test."""
     print("\n📝 Testing create_event functionality...")
-    create_test_event(memory_client, memory_id, TEST_SESSION_ID, TEST_ACTOR_ID)
+    create_test_event(memory_client, memory_id, TestConfig.TEST_SESSION_ID, TestConfig.TEST_ACTOR_ID)
     print("✅ Successfully created test event in memory")
 
 def run_memory_retrieval_test(memory_client: MemoryClient, memory_id: str) -> List[Dict[str, Any]]:
     """Run the memory retrieval test and return memories."""
     print("\n🔍 Testing memory retrieval...")
-    memories = retrieve_test_memories(memory_client, memory_id, TEST_ACTOR_ID)
+    memories = retrieve_test_memories(memory_client, memory_id, TestConfig.TEST_ACTOR_ID)
     display_memories(memories)
     return memories
 
