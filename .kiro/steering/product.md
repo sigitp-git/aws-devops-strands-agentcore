@@ -1,6 +1,6 @@
-# AWS DevOps Bot
+# AWS DevOps Agent
 
-An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memory. The bot provides expert guidance on AWS infrastructure, operations, and DevOps best practices while maintaining conversation context through persistent memory.
+An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memory. The agent provides expert guidance on AWS infrastructure, operations, and DevOps best practices while maintaining conversation context through persistent memory.
 
 ## Core Features
 

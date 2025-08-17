@@ -20,8 +20,8 @@ All project documentation has been reviewed and updated as of August 17, 2025.
 
 ### Memory System Demonstration
 - **Conversation Logs Added**: Real conversation examples showing memory persistence across sessions
-- **Memory Functionality Verified**: Bot successfully remembers user preferences (AWS Amplify as favorite service)
-- **Cross-Session Context**: Demonstrates how the bot maintains context between different conversation sessions
+- **Memory Functionality Verified**: Agent successfully remembers user preferences (AWS Amplify as favorite service)
+- **Cross-Session Context**: Demonstrates how the agent maintains context between different conversation sessions
 - **Memory ID Tracking**: Shows SSM Parameter Store integration with memory ID `DevOpsAgentMemory-AhT18W5l7S`
 
 ### Documentation Completeness
@@ -79,7 +79,7 @@ All documentation files are current and accurately reflect the project's capabil
 
 ## Summary
 
-All documentation is current and accurately reflects the AWS DevOps Bot project with Strands AgentCore Memory integration. The documentation includes:
+All documentation is current and accurately reflects the AWS DevOps Agent project with Strands AgentCore Memory integration. The documentation includes:
 
 1. Comprehensive README with installation, usage, and architecture
 2. Complete project structure documentation  

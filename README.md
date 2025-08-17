@@ -1,6 +1,6 @@
-# AWS DevOps Bot
+# AWS DevOps Agent
 
-An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memory. The bot provides expert guidance on AWS infrastructure, operations, and DevOps best practices while maintaining conversation context through persistent memory.
+An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memory. The agent provides expert guidance on AWS infrastructure, operations, and DevOps best practices while maintaining conversation context through persistent memory.
 
 ## Features
 
@@ -109,7 +109,7 @@ DevOps engineers, cloud architects, and AWS practitioners seeking intelligent as
 
 ## Error Handling
 
-The bot includes comprehensive error handling with:
+The agent includes comprehensive error handling with:
 - Graceful degradation when memory service is unavailable
 - Detailed logging and debugging support
 - User-friendly error messages
@@ -166,8 +166,7 @@ The bot includes comprehensive error handling with:
 ### Intelligent Memory System
 - **Automatic Context Retrieval**: Relevant past conversations are retrieved before processing new queries
 - **Dual Strategy Storage**: Separate namespaces for user preferences and semantic conversation facts
-- **Cross-Session Perion**: Bot continues to function even if memory service is unavailable
-- **Session Managedation**: Bot continues to function even if memory service is unavailable
+- **Graceful Degradation**: Agent continues to function even if memory service is unavailable
 - **Session Management**: Each conversation session is tracked with unique identifiers
 
 ### Web Search Integration
@@ -193,7 +192,7 @@ The bot includes comprehensive error handling with:
 1. **Permission Errors**: Run `python3 check_permissions.py` to validate AWS access
 2. **Memory Issues**: Use `python3 debug_memory.py` for detailed diagnostics
 3. **Region Mismatch**: Ensure AWS_DEFAULT_REGION is set to `us-east-1`
-4. **Memory Creation**: If memory doesn't exist, the bot will automatically create it on first run
+4. **Memory Creation**: If memory doesn't exist, the agent will automatically create it on first run
 
 ### Logs and Debugging
 

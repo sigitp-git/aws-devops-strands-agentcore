@@ -1,30 +1,61 @@
 #!/usr/bin/env python3
 """
-Script to check AWS IAM permissions for the DevOps bot
+Script to check AWS IAM permissions for the DevOps agent
 """
 import boto3
 import json
+import os
+from typing import Tuple, Optional
 from botocore.exceptions import ClientError, NoCredentialsError
 from bedrock_agentcore.memory import MemoryClient
 
-def check_aws_credentials():
-    """Check if AWS credentials are configured"""
-    print("🔍 Checking AWS credentials...")
-    try:
-        sts = boto3.client('sts')
-        identity = sts.get_caller_identity()
-        print(f"✅ AWS credentials configured")
-        print(f"   Account ID: {identity['Account']}")
-        print(f"   User/Role ARN: {identity['Arn']}")
-        print(f"   User ID: {identity['UserId']}")
-        return True
-    except NoCredentialsError:
-        print("❌ AWS credentials not configured")
-        print("   Run 'aws configure' or set environment variables")
-        return False
-    except Exception as e:
-        print(f"❌ Error checking credentials: {e}")
-        return False
+
+class PermissionChecker:
+    """AWS Permission checker with centralized configuration and error handling."""
+    
+    def __init__(self):
+        self.region = self._get_aws_region()
+        self.access_denied_codes = ['AccessDenied', 'UnauthorizedOperation']
+        
+    def _get_aws_region(self) -> str:
+        """Get AWS region from environment or session."""
+        region = os.environ.get('AWS_DEFAULT_REGION')
+        if not region:
+            session = boto3.Session()
+            region = session.region_name
+        return region or 'us-east-1'
+    
+    def _handle_client_error(self, e: ClientError, service: str, action: str) -> Tuple[bool, str]:
+        """Centralized error handling for AWS client errors."""
+        error_code = e.response['Error']['Code']
+        
+        if error_code in self.access_denied_codes:
+            return False, f"❌ {service} {action} permission: DENIED"
+        else:
+            return True, f"⚠️  {service} {action} permission: Unknown error - {e}"
+    
+    def _print_result(self, success: bool, message: str) -> None:
+        """Print formatted result message."""
+        print(message)
+
+    def check_aws_credentials(self) -> bool:
+        """Check if AWS credentials are configured"""
+        print("🔍 Checking AWS credentials...")
+        try:
+            sts = boto3.client('sts', region_name=self.region)
+            identity = sts.get_caller_identity()
+            print("✅ AWS credentials configured")
+            print(f"   Account ID: {identity['Account']}")
+            print(f"   User/Role ARN: {identity['Arn']}")
+            print(f"   User ID: {identity['UserId']}")
+            return True
+        except NoCredentialsError:
+            print("❌ AWS credentials not configured")
+            print("   Run 'aws configure' or set environment variables")
+            return False
+        except Exception as e:
+            print(f"❌ Error checking credentials: {e}")
+            return False
 
 def check_ssm_permissions():
     """Check SSM Parameter Store permissions"""
@@ -213,7 +244,7 @@ def check_region_availability():
 
 def main():
     """Main function to run all permission checks"""
-    print("🚀 AWS DevOps Bot - Permission Checker")
+    print("🚀 AWS DevOps Agent - Permission Checker")
     print("=" * 50)
     
     all_checks_passed = True
@@ -238,7 +269,7 @@ def main():
     
     print("\n" + "=" * 50)
     if all_checks_passed:
-        print("🎉 All permission checks passed! Your bot should work correctly.")
+        print("🎉 All permission checks passed! Your agent should work correctly.")
     else:
         print("⚠️  Some permission checks failed. Please review the issues above.")
         print("\n📋 Required IAM permissions:")

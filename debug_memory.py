@@ -183,4 +183,4 @@ if __name__ == "__main__":
         test_memory_functionality(memory_id)
     else:
         print(f"\n❌ Failed to retrieve memory resource")
-        print("   The bot will need to create a new memory or fix the existing one")
+        print("   The agent will need to create a new memory or fix the existing one")

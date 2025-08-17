@@ -28,12 +28,12 @@ Temperature 0.1 (Very focused):
 •	"The AWS Well-Architected Framework has 6 pillars: Security, Reliability, Performance Efficiency, Cost Optimization, Operational Excellence, and Sustainability."
 Temperature 0.9 (More creative):
 •	"The AWS Well-Architected Framework is like a compass for cloud architects, guiding them through six essential pillars that form the foundation of robust cloud solutions..."
-For Your AWS DevOps Bot
-Since your bot provides technical AWS information, you might want:
+For Your AWS DevOps Agent
+Since your agent provides technical AWS information, you might want:
 •	Temperature 0.3-0.5: For accurate, consistent technical answers
 •	Temperature 0.6-0.8: For more engaging, conversational responses while maintaining accuracy
 
-Benefits of Temperature 0.3 for Your AWS DevOps Bot:
+Benefits of Temperature 0.3 for Your AWS DevOps Agent:
 1.	Consistent Structure - The response follows a clear, organized format every time
 2.	Technical Accuracy - Focuses on providing accurate AWS service information
 3.	Professional Tone - Maintains a professional, helpful tone suitable for technical guidance
@@ -59,9 +59,9 @@ model = BedrockModel(
     temperature=0.3  # Perfect for technical AWS DevOps guidance
 )
 
-The temperature=0.3 setting is ideal for your AWS DevOps bot because it provides:
+The temperature=0.3 setting is ideal for your AWS DevOps agent because it provides:
 •	Reliable technical information
 •	Consistent formatting and structure
 •	Professional, helpful responses
 •	Accurate AWS service details
-Your bot is now optimized for providing consistent, accurate AWS DevOps guidance while maintaining an engaging conversational style!
+Your agent is now optimized for providing consistent, accurate AWS DevOps guidance while maintaining an engaging conversational style!
