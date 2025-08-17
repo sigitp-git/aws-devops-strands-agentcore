@@ -21,123 +21,202 @@ from strands.models.bedrock import BedrockModel
 from bedrock_agentcore.memory import MemoryClient
 from bedrock_agentcore.memory.constants import StrategyType
 
-# Set AWS region
-os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-boto_session = Session()
-REGION = boto_session.region_name
+class AgentConfig:
+    """Configuration settings for the DevOps Agent."""
+    
+    # AWS Settings
+    DEFAULT_REGION = 'us-east-1'
+    
+    # Model Settings
+    MODEL_ID = 'us.anthropic.claude-sonnet-4-20250514-v1:0'
+    MODEL_TEMPERATURE = 0.3
+    
+    # Memory Settings
+    MEMORY_NAME = "DevOpsAgentMemory"
+    SSM_MEMORY_ID_PATH = "/app/devopsagent/agentcore/memory_id"
+    MEMORY_EXPIRY_DAYS = 90
+    CONTEXT_RETRIEVAL_TOP_K = 3
+    DEVOPS_USER_ID = "devops_001"
+    
+    # Search Settings
+    SEARCH_REGION = "us-en"
+    
+    @classmethod
+    def setup_aws_region(cls):
+        """Setup AWS region configuration."""
+        os.environ['AWS_DEFAULT_REGION'] = cls.DEFAULT_REGION
+        return Session().region_name
+
+# Initialize configuration
+REGION = AgentConfig.setup_aws_region()
 
 # Configure logging
-logging.getLogger("strands").setLevel(
-    logging.INFO
-)  # Set to DEBUG for more detailed logs
-
+logging.getLogger("strands").setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 # Define a websearch tool
 @tool
 def websearch(
-    keywords: str, region: str = "us-en", max_results: int | None = None
+    keywords: str, region: str = AgentConfig.SEARCH_REGION, max_results: int | None = None
 ) -> str:
-    """Search the web to get updated information.
+    """Search the web to get updated information using DuckDuckGo.
+    
     Args:
-        keywords (str): The search query keywords.
-        region (str): The search region: wt-wt, us-en, uk-en, ru-ru, etc..
-        max_results (int | None): The maximum number of results to return.
+        keywords: The search query keywords
+        region: The search region (wt-wt, us-en, uk-en, ru-ru, etc.)
+        max_results: The maximum number of results to return
+        
     Returns:
-        List of dictionaries with search results.
+        Search results as formatted string or error message
     """
+    if not keywords or not keywords.strip():
+        return "Error: Search keywords cannot be empty."
+    
     try:
+        logger.info(f"Performing web search for: '{keywords}' in region: {region}")
         results = DDGS().text(keywords, region=region, max_results=max_results)
-        return results if results else "No results found."
+        
+        if not results:
+            logger.warning(f"No search results found for: {keywords}")
+            return "No results found."
+        
+        logger.info(f"Found {len(results)} search results")
+        return _format_search_results(results)
+        
     except RatelimitException:
-        return "RatelimitException: Please try again after a short delay."
-    except DDGSException as d:
-        return f"DuckDuckGoSearchException: {d}"
+        logger.warning("DuckDuckGo rate limit exceeded")
+        return "Rate limit exceeded. Please try again after a short delay."
+    except DDGSException as e:
+        logger.error(f"DuckDuckGo search error: {e}")
+        return f"Search service error: {e}"
     except Exception as e:
-        return f"Exception: {e}"
+        logger.error(f"Unexpected error during web search: {e}")
+        return f"Search failed: {e}"
+
+def _format_search_results(results: list) -> str:
+    """Format search results for better readability."""
+    if not results:
+        return "No results found."
+    
+    formatted = []
+    for i, result in enumerate(results, 1):
+        title = result.get('title', 'No title')
+        body = result.get('body', 'No description')
+        href = result.get('href', 'No URL')
+        
+        formatted.append(f"{i}. **{title}**\n   {body}\n   URL: {href}\n")
+    
+    return "\n".join(formatted)
 
 
 # Create a Bedrock model instance with temperature control
 # Temperature 0.3: Focused and consistent responses, ideal for technical accuracy
 # Adjust temperature: 0.1-0.3 (very focused), 0.4-0.7 (balanced), 0.8-1.0 (creative)
 model = BedrockModel(
-    model_id='us.anthropic.claude-sonnet-4-20250514-v1:0', 
-    temperature=0.3
+    model_id=AgentConfig.MODEL_ID, 
+    temperature=AgentConfig.MODEL_TEMPERATURE
 )
 
 # AgentCore Memory section
 memory_client = MemoryClient(region_name=REGION)
-memory_name = "DevOpsAgentMemory"
+memory_name = AgentConfig.MEMORY_NAME
 
-def create_or_get_memory_resource():
-    print("Attempting to retrieve or create AgentCore Memory resource...")
+
+
+class MemoryManager:
+    """Manages AgentCore Memory resource lifecycle."""
     
-    # Step 1: Try to get existing memory ID from SSM
-    try:
-        memory_id = get_ssm_parameter("/app/devopsagent/agentcore/memory_id")
+    def __init__(self, client: MemoryClient, memory_name: str):
+        self.client = client
+        self.memory_name = memory_name
+        
+    def get_or_create_memory(self) -> str | None:
+        """Get existing memory or create new one."""
+        logger.info("Attempting to retrieve or create AgentCore Memory resource...")
+        
+        # Try SSM first, then search, then create
+        memory_id = self._get_memory_from_ssm()
         if memory_id:
-            print(f"Found memory ID in SSM: {memory_id}")
-            # Verify the memory exists
-            try:
-                memory_client.gmcp_client.get_memory(memoryId=memory_id)
-                print("Memory verified successfully")
-                return memory_id
-            except Exception as verify_error:
-                print(f"Memory ID from SSM is invalid: {verify_error}")
-                # Continue to next step
-    except Exception as e:
-        print(f"Could not retrieve memory ID from SSM: {e}")
+            return memory_id
+            
+        memory_id = self._find_existing_memory()
+        if memory_id:
+            return memory_id
+            
+        return self._create_new_memory()
     
-    # Step 2: Try to find existing memory by name or ID pattern
-    try:
-        print("Searching for existing memory...")
-        memories = memory_client.gmcp_client.list_memories()
-        print(f"Found {len(memories.get('memories', []))} total memories")
-        
-        for memory in memories.get('memories', []):
-            memory_id = memory.get('id')
-            memory_name_from_api = memory.get('name')
-            memory_status = memory.get('status')
-            
-            print(f"  Memory ID: {memory_id}, Name: {memory_name_from_api}, Status: {memory_status}")
-            
-            # Skip memories that are being deleted
-            if memory_status == 'DELETING':
-                print(f"    Skipping memory {memory_id} - status is DELETING")
-                continue
-            
-            # Check if this matches our target memory by name
-            if memory_name_from_api == memory_name:
-                print(f"Found existing memory by name: {memory_id}")
-                # Save the ID to SSM for future use
+    def _get_memory_from_ssm(self) -> str | None:
+        """Retrieve and verify memory ID from SSM."""
+        try:
+            memory_id = get_ssm_parameter(AgentConfig.SSM_MEMORY_ID_PATH)
+            if memory_id:
+                logger.info(f"Found memory ID in SSM: {memory_id}")
+                # Verify the memory exists
                 try:
-                    put_ssm_parameter("/app/devopsagent/agentcore/memory_id", memory_id)
-                    print("Saved memory ID to SSM")
-                except Exception as ssm_error:
-                    print(f"Warning: Could not save memory ID to SSM: {ssm_error}")
-                return memory_id
-            
-            # Check if this matches by ID pattern (fallback for memories with None name)
-            elif memory_name_from_api is None and memory_name in memory_id and memory_status == 'ACTIVE':
-                print(f"Found existing memory by ID pattern: {memory_id}")
-                print("  (Memory has None name, likely from previous creation)")
-                # Save the ID to SSM for future use
-                try:
-                    put_ssm_parameter("/app/devopsagent/agentcore/memory_id", memory_id)
-                    print("Saved memory ID to SSM")
-                except Exception as ssm_error:
-                    print(f"Warning: Could not save memory ID to SSM: {ssm_error}")
-                return memory_id
-        
-        print("No existing memory found by name or pattern")
-    except Exception as e:
-        print(f"Could not list existing memories: {e}")
+                    self.client.gmcp_client.get_memory(memoryId=memory_id)
+                    logger.info("Memory verified successfully")
+                    return memory_id
+                except Exception as verify_error:
+                    logger.warning(f"Memory ID from SSM is invalid: {verify_error}")
+        except Exception as e:
+            logger.warning(f"Could not retrieve memory ID from SSM: {e}")
+        return None
     
-    # Step 3: Create new memory if none exists
-    try:
-        print("Creating new AgentCore Memory resource...")
-        strategies = [
+    def _find_existing_memory(self) -> str | None:
+        """Search for existing memory by name or pattern."""
+        try:
+            logger.info("Searching for existing memory...")
+            memories = self.client.gmcp_client.list_memories()
+            logger.info(f"Found {len(memories.get('memories', []))} total memories")
+            
+            for memory in memories.get('memories', []):
+                memory_id = memory.get('id')
+                memory_name_from_api = memory.get('name')
+                memory_status = memory.get('status')
+                
+                logger.debug(f"Memory ID: {memory_id}, Name: {memory_name_from_api}, Status: {memory_status}")
+                
+                if memory_status == 'DELETING':
+                    continue
+                
+                # Check by name or ID pattern
+                if (memory_name_from_api == self.memory_name or 
+                    (memory_name_from_api is None and self.memory_name in memory_id and memory_status == 'ACTIVE')):
+                    logger.info(f"Found existing memory: {memory_id}")
+                    self._save_memory_id_to_ssm(memory_id)
+                    return memory_id
+            
+            logger.info("No existing memory found")
+        except Exception as e:
+            logger.error(f"Could not list existing memories: {e}")
+        return None
+    
+    def _create_new_memory(self) -> str | None:
+        """Create a new memory resource."""
+        try:
+            logger.info("Creating new AgentCore Memory resource...")
+            strategies = self._create_memory_strategies()
+            
+            logger.info("Creating AgentCore Memory resources. This can take a couple of minutes...")
+            response = self.client.create_memory_and_wait(
+                name=self.memory_name,
+                description="DevOps Agent memory",
+                strategies=strategies,
+                event_expiry_days=AgentConfig.MEMORY_EXPIRY_DAYS,
+            )
+            memory_id = response["id"]
+            logger.info(f"Successfully created memory: {memory_id}")
+            
+            self._save_memory_id_to_ssm(memory_id)
+            return memory_id
+        except Exception as e:
+            logger.error(f"Failed to create memory: {e}")
+            return None
+    
+    def _create_memory_strategies(self) -> list:
+        """Create memory strategies configuration."""
+        return [
             {
                 StrategyType.USER_PREFERENCE.value: {
                     "name": "DevOpsPreferences",
@@ -153,43 +232,50 @@ def create_or_get_memory_resource():
                 }
             },
         ]
-        print("Creating AgentCore Memory resources. This can take a couple of minutes...")
-        # *** AGENTCORE MEMORY USAGE *** - Create memory resource with semantic strategy
-        response = memory_client.create_memory_and_wait(
-            name=memory_name,
-            description="DevOps Agent memory",
-            strategies=strategies,
-            event_expiry_days=90,          # Memories expire after 90 days
-        )
-        memory_id = response["id"]
-        print(f"Successfully created memory: {memory_id}")
-        
-        # Save to SSM
+    
+    def _save_memory_id_to_ssm(self, memory_id: str) -> None:
+        """Save memory ID to SSM Parameter Store."""
         try:
-            put_ssm_parameter("/app/devopsagent/agentcore/memory_id", memory_id)
-            print("Saved new memory ID to SSM")
-        except Exception as ssm_error:
-            print(f"Warning: Could not save memory ID to SSM: {ssm_error}")
-        
-        return memory_id
+            put_ssm_parameter(AgentConfig.SSM_MEMORY_ID_PATH, memory_id)
+            logger.info("Saved memory ID to SSM")
+        except Exception as e:
+            logger.warning(f"Could not save memory ID to SSM: {e}")
+
+def create_or_get_memory_resource():
+    """Factory function for memory resource creation."""
+    memory_manager = MemoryManager(memory_client, memory_name)
+    return memory_manager.get_or_create_memory()
+
+def initialize_memory() -> str | None:
+    """Initialize memory with proper error handling."""
+    try:
+        memory_id = create_or_get_memory_resource()
+        if memory_id:
+            logger.info(f"AgentCore Memory ready with ID: {memory_id}")
+            return memory_id
+        else:
+            _log_memory_initialization_error()
+            return None
     except Exception as e:
-        print(f"Failed to create memory: {e}")
+        logger.error(f"Unexpected error during memory initialization: {e}")
+        _log_memory_initialization_error()
         return None
 
-memory_id = create_or_get_memory_resource()
-if not memory_id:
-    print("ERROR: Failed to create or retrieve memory resource")
-    print("Possible causes:")
-    print("1. AWS credentials not configured or insufficient permissions")
-    print("2. AgentCore Memory service not available in your region")
-    print("3. Network connectivity issues")
-    print("4. SSM parameter store access issues")
-    print("\nThe agent will continue without memory functionality...")
-    memory_id = None
-else:
-    print(f"AgentCore Memory ready with ID: {memory_id}")
+def _log_memory_initialization_error():
+    """Log memory initialization error with helpful information."""
+    error_messages = [
+        "Failed to create or retrieve memory resource",
+        "Possible causes:",
+        "1. AWS credentials not configured or insufficient permissions",
+        "2. AgentCore Memory service not available in your region",
+        "3. Network connectivity issues",
+        "4. SSM parameter store access issues",
+        "The agent will continue without memory functionality..."
+    ]
+    for msg in error_messages:
+        logger.warning(msg)
 
-DEVOPS_USER_ID = "devops_001"
+memory_id = initialize_memory()
 
 class DevOpsAgentMemoryHooks(HookProvider):
     """Memory hooks for DevOps Agent"""
@@ -224,7 +310,7 @@ class DevOpsAgentMemoryHooks(HookProvider):
                         memory_id=self.memory_id,
                         namespace=namespace.format(actorId=self.actor_id),
                         query=user_query,
-                        top_k=3,
+                        top_k=AgentConfig.CONTEXT_RETRIEVAL_TOP_K,
                     )
                     # Post-processing: Format memories into context strings
                     for memory in memories:
@@ -293,20 +379,27 @@ class DevOpsAgentMemoryHooks(HookProvider):
 
 SESSION_ID = str(uuid.uuid4())
 
-# Only create memory hooks if memory_id is available
-hooks = []
-if memory_id:
-    memory_hooks = DevOpsAgentMemoryHooks(memory_id, memory_client, DEVOPS_USER_ID, SESSION_ID)
-    hooks = [memory_hooks]
-    print("Memory hooks enabled")
-else:
-    print("Running without memory functionality")
+def create_agent_hooks(memory_id: str | None) -> list:
+    """Create agent hooks based on memory availability."""
+    if not memory_id:
+        logger.info("Running without memory functionality")
+        return []
+    
+    session_id = str(uuid.uuid4())
+    memory_hooks = DevOpsAgentMemoryHooks(
+        memory_id, memory_client, AgentConfig.DEVOPS_USER_ID, session_id
+    )
+    logger.info("Memory hooks enabled")
+    return [memory_hooks]
 
-# Create an example agent
-agent = Agent(
-    model=model,
-    hooks=hooks, # Pass Memory Hooks only if available
-    system_prompt="""You are AWS DevOps agent. Help with AWS infrastructure and operations.
+def create_devops_agent() -> Agent:
+    """Create and configure the DevOps agent."""
+    hooks = create_agent_hooks(memory_id)
+    
+    return Agent(
+        model=model,
+        hooks=hooks,
+        system_prompt="""You are AWS DevOps agent. Help with AWS infrastructure and operations.
 
 CRITICAL EFFICIENCY RULES:
 - Answer from knowledge FIRST before using tools
@@ -320,21 +413,53 @@ NON-FUNCTIONAL RULES:
 - Always offer additional help after answering questions
 - If you can't help with something, direct users to the appropriate contact
 """,
-    tools=[websearch],
-)
+        tools=[websearch],
+    )
 
+class ConversationManager:
+    """Manages the interactive conversation loop."""
+    
+    def __init__(self, agent: Agent, bot_name: str = "AWS-DevOps-agent"):
+        self.agent = agent
+        self.bot_name = bot_name
+        self.exit_commands = {'exit', 'quit', 'bye'}
+    
+    def start_conversation(self):
+        """Start the interactive conversation loop."""
+        print(f"\n🚀 {self.bot_name}: Ask me about DevOps on AWS! Type 'exit' to quit.\n")
+        
+        try:
+            while True:
+                try:
+                    user_input = input("\nYou > ").strip()
+                    
+                    if user_input.lower() in self.exit_commands:
+                        print("Happy DevOpsing!")
+                        break
+                        
+                    if not user_input:
+                        print(f"\n{self.bot_name} > Please ask me something about DevOps on AWS!")
+                        continue
+                    
+                    response = self.agent(user_input)
+                    print(f"\n{self.bot_name} > {response}")
+                    
+                except KeyboardInterrupt:
+                    print("\n\nGoodbye! Happy DevOpsing!")
+                    break
+                except Exception as e:
+                    logger.error(f"Error processing user input: {e}")
+                    print(f"\n{self.bot_name} > Sorry, I encountered an error: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Fatal error in conversation loop: {e}")
+            print(f"Fatal error: {e}")
+
+def main():
+    """Main execution function."""
+    agent = create_devops_agent()
+    conversation_manager = ConversationManager(agent)
+    conversation_manager.start_conversation()
 
 if __name__ == "__main__":
-    print("\n🚀 AWS-DevOps-agent: Ask me about DevOps on AWS! Type 'exit' to quit.\n")
-
-    # Run the agent in a loop for interactive conversation
-    while True:
-        user_input = input("\nYou > ")
-        if user_input.lower() == "exit":
-            print("Happy DevOpsing!")
-            break
-        if not user_input.strip():
-            print("\nAWS-DevOps-agent > Please ask me something about DevOps on AWS!")
-            continue
-        response = agent(user_input)
-        print(f"\nAWS-DevOps-agent > {response}")
+    main()
