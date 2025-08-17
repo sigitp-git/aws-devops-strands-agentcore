@@ -5,10 +5,12 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 ## Features
 
 - **AWS Expertise**: Specialized knowledge of AWS services, infrastructure, and DevOps practices
-- **Memory Integration**: Uses Amazon Bedrock AgentCore Memory to remember user preferences and conversation history
+- **Advanced Memory System**: Uses Amazon Bedrock AgentCore Memory with semantic search for intelligent context retrieval
+- **Preference Learning**: Gradually adapts to user preferences and maintains conversation continuity across sessions
 - **Web Search**: Real-time web search capability for current information using DuckDuckGo
 - **Conversational AI**: Powered by Claude Sonnet 4 with optimized temperature settings for technical accuracy
 - **Kiro IDE Integration**: Automated code quality analysis and documentation synchronization through agent hooks
+- **Cross-Session Persistence**: Maintains memory and context across different agent sessions
 
 ## Prerequisites
 
@@ -42,10 +44,12 @@ export AWS_DEFAULT_REGION=us-east-1
 
 ### Running the Agent
 
-Start the interactive conversation:
+Start the interactive conversation with the AWS-DevOps-agent:
 ```bash
 python3 agent.py
 ```
+
+The agent will identify itself as "AWS-DevOps-agent" and provide expert AWS DevOps guidance while maintaining conversation context through its advanced memory system.
 
 ### Testing and Debugging
 
@@ -154,20 +158,34 @@ The agent includes comprehensive error handling with:
 - **.kiro/steering/**: AI assistant guidance documents for project context
 
 ### Memory Patterns
-- **Namespaces**: 
-  - `agent/devops/{actorId}/preferences` - User preferences and behavior
-  - `agent/devops/{actorId}/semantic` - Conversation facts and context
-- **Event-driven memory updates**: Automatic saving after each interaction
-- **Context retrieval**: Relevant memories retrieved before query processing
-- **Automatic interaction persistence**: All conversations stored for 90 days
+- **Enhanced Namespace Structure**: 
+  - `agent/devops/{actorId}/preferences` - User preferences and behavioral patterns
+  - `agent/devops/{actorId}/semantic` - Conversation facts and contextual information
+- **Event-driven Memory Updates**: Automatic saving after each interaction with consistent "AGENT" role
+- **Semantic Context Retrieval**: Advanced semantic search retrieves relevant memories before query processing
+- **Cross-Session Continuity**: Memory persists across different agent sessions for seamless user experience
+- **Automatic Interaction Persistence**: All conversations stored for 90 days with intelligent preference weighting
 
 ## Key Features in Detail
 
 ### Intelligent Memory System
+- **Advanced Semantic Memory**: Uses semantic search for intelligent context retrieval from conversation history
 - **Automatic Context Retrieval**: Relevant past conversations are retrieved before processing new queries
 - **Dual Strategy Storage**: Separate namespaces for user preferences and semantic conversation facts
+- **Preference Learning**: Gradually learns and adapts to user preferences through repeated interactions
+- **Cross-Session Persistence**: Memory maintained across different agent sessions with consistent role handling
+- **Role Consistency**: All interactions saved with "AGENT" role for proper conversation flow
 - **Graceful Degradation**: Agent continues to function even if memory service is unavailable
 - **Session Management**: Each conversation session is tracked with unique identifiers
+
+#### Memory Behavior and Preference Weighting
+The AgentCore Memory system uses semantic search to retrieve relevant context, which means:
+- **Established Preferences**: Topics discussed frequently across multiple conversations receive higher semantic weight
+- **New Preferences**: Recently introduced preferences need reinforcement through continued conversation
+- **Learning Timeline**: The system typically requires multiple interactions to fully adapt to preference changes
+- **Context Ranking**: Semantic search naturally prioritizes well-established conversation patterns
+
+**Best Practice**: When introducing new preferences or topics, engage in multiple conversations about those topics to help the memory system learn and prioritize them appropriately.
 
 ### Web Search Integration
 - **Real-time Information**: DuckDuckGo search for current AWS updates and information
@@ -215,3 +233,9 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 5. Commit your changes (`git commit -m 'Add some amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
+
+### Latest Status (August 17, 2025)
+✅ **All Functionalities Verified**: Agent startup, memory system, web search, AWS integration, and cross-session persistence all working correctly
+✅ **Role Implementation**: Successfully updated from "assistant" to "agent" role throughout the system
+✅ **Semantic Memory**: Advanced memory system with preference learning and context retrieval
+✅ **Comprehensive Testing**: Permission validation, memory functionality, and debug tools all operational
