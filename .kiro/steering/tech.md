@@ -58,8 +58,23 @@ aws configure
 aws sts get-caller-identity
 ```
 
+## Kiro IDE Integration
+
+### Agent Hooks
+- **Code Quality Analyzer**: Monitors source code files for changes and provides improvement suggestions
+- **Documentation Sync**: Keeps documentation up to date with code changes
+- **File Patterns**: Supports Python, JavaScript, TypeScript, Java, C++, and more
+- **Debounce**: Short delay to batch rapid file changes
+
+### Steering Rules
+- **Product Guidelines**: Core features and capabilities documentation
+- **Structure Guidelines**: Project organization and file structure
+- **Technology Guidelines**: Stack details and configuration
+
 ## Development Notes
 - Memory hooks are automatically registered if memory is available
 - Graceful degradation when memory service is unavailable
 - Comprehensive error handling and logging
 - SSM parameter store used for persistent configuration
+- Automated code quality analysis on file changes
+- MIT License for open source distribution

@@ -25,3 +25,12 @@ DevOps engineers, cloud architects, and AWS practitioners seeking intelligent as
 - Provides up-to-date information through web search
 - Maintains professional, helpful tone
 - Focuses on actionable, practical advice
+- Automated code quality analysis through Kiro IDE hooks
+- Comprehensive testing and debugging utilities
+
+## Repository Information
+
+- **GitHub**: https://github.com/sigitp-git/aws-devops-strands-agentcore
+- **License**: MIT License
+- **Language**: Python 3.8+
+- **Platform**: Cross-platform (Linux, macOS, Windows)

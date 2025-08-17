@@ -5,10 +5,16 @@
 ├── agent.py              # Main agent implementation and entry point
 ├── utils.py              # Utility functions for AWS services and config
 ├── requirements.txt      # Python dependencies
+├── README.md            # Project documentation and setup guide
+├── LICENSE              # MIT License file
 ├── .gitignore           # Git exclusions (Python, AWS, IDE files)
 ├── notes.md             # Development notes and testing results
 ├── model_temperature.md # Documentation on model temperature settings
+├── check_permissions.py # AWS permission validation tool
+├── test_memory_save.py  # Memory functionality testing
+├── debug_memory.py      # Memory troubleshooting utilities
 └── .kiro/               # Kiro IDE configuration and steering rules
+    ├── hooks/           # Agent hooks for automated tasks
     └── steering/        # AI assistant guidance documents
 ```
 
@@ -29,6 +35,29 @@
 - AWS account/region helpers
 - Cognito client utilities
 
+## Documentation Files
+
+### README.md
+- Comprehensive project documentation
+- Installation and setup instructions
+- Usage examples and troubleshooting
+- Architecture overview and features
+
+### LICENSE
+- MIT License for open source distribution
+- Copyright and usage permissions
+
+### notes.md
+- Development notes and testing results
+- Memory functionality verification with real conversation examples
+- Test execution logs and outcomes
+- Cross-session memory persistence demonstrations
+
+### model_temperature.md
+- Temperature configuration documentation
+- Best practices for different use cases
+- Technical accuracy optimization guide
+
 ## Testing and Debug Files
 
 ### check_permissions.py
@@ -46,6 +75,17 @@
 - Memory resource investigation
 - SSM parameter validation
 - Memory creation capability testing
+
+## Kiro IDE Configuration
+
+### .kiro/hooks/
+- **code-quality-analyzer.kiro.hook**: Automated code quality analysis on file changes
+- **docs-sync-hook.kiro.hook**: Documentation synchronization automation
+
+### .kiro/steering/
+- **product.md**: Product overview and core features
+- **structure.md**: Project structure and file organization
+- **tech.md**: Technology stack and configuration details
 
 ## Configuration Patterns
 

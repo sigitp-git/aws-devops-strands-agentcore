@@ -8,10 +8,11 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 - **Memory Integration**: Uses Amazon Bedrock AgentCore Memory to remember user preferences and conversation history
 - **Web Search**: Real-time web search capability for current information using DuckDuckGo
 - **Conversational AI**: Powered by Claude Sonnet 4 with optimized temperature settings for technical accuracy
+- **Kiro IDE Integration**: Automated code quality analysis and documentation synchronization through agent hooks
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.8+
 - AWS CLI configured with appropriate credentials
 - Access to Amazon Bedrock and AgentCore Memory services
 - AWS region set to `us-east-1` (default)
@@ -21,8 +22,8 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd aws-devops-bot
+git clone https://github.com/sigitp-git/aws-devops-strands-agentcore.git
+cd aws-devops-strands-agentcore
 ```
 
 2. Install dependencies:
@@ -118,14 +119,39 @@ The bot includes comprehensive error handling with:
 
 ### Project Structure
 ```
-├── agent.py              # Main agent implementation
-├── utils.py              # AWS utility functions
+├── agent.py              # Main agent implementation and entry point
+├── utils.py              # Utility functions for AWS services and config
 ├── requirements.txt      # Python dependencies
-├── check_permissions.py  # AWS permission checker
-├── test_memory_save.py   # Memory functionality tests
-├── debug_memory.py       # Memory troubleshooting
-└── .kiro/               # IDE configuration
+├── README.md            # Project documentation and setup guide
+├── LICENSE              # MIT License file
+├── .gitignore           # Git exclusions (Python, AWS, IDE files)
+├── notes.md             # Development notes and testing results
+├── model_temperature.md # Documentation on model temperature settings
+├── check_permissions.py # AWS permission validation tool
+├── test_memory_save.py  # Memory functionality testing
+├── debug_memory.py      # Memory troubleshooting utilities
+└── .kiro/               # Kiro IDE configuration and steering rules
+    ├── hooks/           # Agent hooks for automated tasks
+    └── steering/        # AI assistant guidance documents
 ```
+
+### Kiro IDE Integration
+
+#### Agent Hooks
+- **Code Quality Analyzer**: Monitors source code files for changes and provides improvement suggestions
+- **Documentation Sync**: Keeps documentation up to date with code changes
+- **File Patterns**: Supports Python, JavaScript, TypeScript, Java, C++, and more
+- **Debounce**: Short delay to batch rapid file changes
+
+#### Steering Rules
+- **Product Guidelines**: Core features and capabilities documentation
+- **Structure Guidelines**: Project organization and file structure
+- **Technology Guidelines**: Stack details and configuration
+
+### Additional Documentation
+- **notes.md**: Development notes, testing results, and real conversation examples demonstrating memory functionality
+- **model_temperature.md**: Documentation on model temperature settings and optimization
+- **.kiro/steering/**: AI assistant guidance documents for project context
 
 ### Memory Patterns
 - **Namespaces**: 
@@ -140,7 +166,8 @@ The bot includes comprehensive error handling with:
 ### Intelligent Memory System
 - **Automatic Context Retrieval**: Relevant past conversations are retrieved before processing new queries
 - **Dual Strategy Storage**: Separate namespaces for user preferences and semantic conversation facts
-- **Graceful Degradation**: Bot continues to function even if memory service is unavailable
+- **Cross-Session Perion**: Bot continues to function even if memory service is unavailable
+- **Session Managedation**: Bot continues to function even if memory service is unavailable
 - **Session Management**: Each conversation session is tracked with unique identifiers
 
 ### Web Search Integration
@@ -152,6 +179,12 @@ The bot includes comprehensive error handling with:
 - **SSM Parameter Store**: Persistent storage for memory IDs and configuration
 - **Multi-service Support**: Bedrock, AgentCore Memory, STS integration
 - **Region Awareness**: Automatic region detection and configuration
+
+### Development Automation
+- **Automated Code Quality Analysis**: Kiro IDE hooks monitor file changes and provide improvement suggestions
+- **Documentation Synchronization**: Automatic updates to keep documentation aligned with code changes
+- **Multi-language Support**: Code analysis supports Python, JavaScript, TypeScript, Java, C++, and more
+- **Intelligent Debouncing**: Batches rapid file changes to avoid excessive processing
 
 ## Troubleshooting
 
