@@ -1,5 +1,7 @@
 #!/bin/bash
 # Activation script for aws-devops-strands-agentcore virtual environment
+# Activate: $ sudo chmod -R 755  ./venv/bin; source venv/bin/activate 
+# Deactivate: $ deactivate
 
 echo "Activating virtual environment..."
 python3 -m venv venv
