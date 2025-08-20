@@ -10,6 +10,9 @@
 ├── .gitignore           # Git exclusions (Python, AWS, IDE files)
 ├── notes.md             # Development notes and testing results
 ├── model_temperature.md # Documentation on model temperature settings
+├── cognito_authentication_documentation.md # Complete authentication flow documentation
+├── FUNCTIONALITY_STATUS.md # Comprehensive system status report
+├── DOCUMENTATION_STATUS.md # Documentation completeness tracking
 ├── check_permissions.py # AWS permission validation tool
 ├── test_memory_save.py  # Memory functionality testing
 ├── debug_memory.py      # Memory troubleshooting utilities
@@ -34,6 +37,8 @@
 - Agent configuration with Bedrock model
 - Memory hooks implementation (DevOpsAgentMemoryHooks)
 - Web search tool integration
+- OAuth2 authentication with Cognito
+- MCP gateway integration with JWT tokens
 - Interactive conversation loop
 - Memory resource creation and management
 
@@ -42,7 +47,7 @@
 - SSM Parameter Store operations (get/put/delete)
 - Configuration file readers (JSON/YAML)
 - AWS account/region helpers
-- Cognito client utilities
+- Cognito client utilities and secret retrieval
 
 ## Documentation Files
 
@@ -66,6 +71,22 @@
 - Temperature configuration documentation
 - Best practices for different use cases
 - Technical accuracy optimization guide
+
+### cognito_authentication_documentation.md
+- Complete OAuth2 Client Credentials flow documentation
+- Visual authentication flow diagram
+- Parameter exchange details and security considerations
+- Troubleshooting guide and configuration requirements
+
+### FUNCTIONALITY_STATUS.md
+- Comprehensive system status report
+- All functionality verification results
+- Performance characteristics and testing results
+
+### DOCUMENTATION_STATUS.md
+- Documentation completeness tracking
+- Update history and recent changes
+- File organization and maintenance status
 
 ## Testing and Debug Files
 
@@ -137,10 +158,17 @@
 - Automatic memory resource discovery and creation
 - Graceful fallback when memory unavailable
 
+### Authentication Configuration
+- Cognito authentication parameters in SSM Parameter Store
+- OAuth2 Client Credentials flow implementation
+- JWT token management and refresh
+- MCP gateway integration with secure authentication
+
 ### AWS Integration
 - Region configuration via environment variables
 - Boto3 session management
 - Service-specific client initialization
+- Cognito User Pool and gateway integration
 
 ### Error Handling
 - Comprehensive exception handling

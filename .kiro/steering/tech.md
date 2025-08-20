@@ -13,11 +13,13 @@
 
 ## AWS Services
 - **Bedrock**: LLM inference and model hosting
-- **SSM Parameter Store**: Configuration and memory ID storage
-- **STS**: Identity and credential management
 - **Amazon Bedrock AgentCore Memory**: Conversation persistence and retrieval
+- **Amazon Bedrock AgentCore Gateway**: MCP tool integration with secure authentication
+- **Amazon Cognito**: User Pool for OAuth2 authentication and JWT token management
+- **SSM Parameter Store**: Configuration and authentication parameter storage
+- **STS**: Identity and credential management
 - **AWS Lambda**: Web search function deployment and execution
-- **IAM**: Lambda execution roles and permissions
+- **IAM**: Lambda execution roles and gateway permissions
 - **CloudWatch**: Lambda function logging and monitoring
 
 ## Configuration
@@ -25,6 +27,8 @@
 - **Model**: us.anthropic.claude-sonnet-4-20250514-v1:0
 - **Temperature**: 0.3 (optimized for technical accuracy)
 - **Memory Expiry**: 90 days
+- **Authentication**: OAuth2 Client Credentials Grant with Cognito
+- **Gateway**: Bedrock AgentCore Gateway with JWT authentication
 
 ## Common Commands
 

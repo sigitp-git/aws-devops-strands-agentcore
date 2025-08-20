@@ -2,6 +2,9 @@
 
 An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memory. The agent provides expert guidance on AWS infrastructure, operations, and DevOps best practices while maintaining conversation context through persistent memory.
 
+> 📋 **Quick Start**: For a complete system overview, see [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md)  
+> 🔐 **Authentication**: For detailed authentication flow, see [Cognito Authentication Documentation](cognito_authentication_documentation.md)
+
 ## Features
 
 - **AWS Expertise**: Specialized knowledge of AWS services, infrastructure, and DevOps practices
@@ -9,8 +12,11 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 - **Preference Learning**: Gradually adapts to user preferences and maintains conversation continuity across sessions
 - **Web Search**: Real-time web search capability for current information using DuckDuckGo
 - **Conversational AI**: Powered by Claude Sonnet 4 with optimized temperature settings for technical accuracy
+- **Secure Authentication**: OAuth2 Client Credentials flow with Amazon Cognito for secure service access
+- **MCP Gateway Integration**: Bedrock AgentCore Gateway with JWT authentication for advanced tool access
 - **Kiro IDE Integration**: Automated code quality analysis and documentation synchronization through agent hooks
 - **Cross-Session Persistence**: Maintains memory and context across different agent sessions
+- **Lambda Web Search**: Deployable AWS Lambda function for scalable web search functionality
 
 ## Prerequisites
 
@@ -214,6 +220,20 @@ Memory ID is automatically stored in SSM Parameter Store at:
 /app/devopsagent/agentcore/memory_id
 ```
 
+### Authentication Configuration
+The agent uses Amazon Cognito for secure authentication with the following SSM parameters:
+```
+/app/devopsagent/agentcore/machine_client_id     # Cognito App Client ID
+/app/devopsagent/agentcore/userpool_id           # Cognito User Pool ID
+/app/devopsagent/agentcore/cognito_token_url     # OAuth2 Token Endpoint
+/app/devopsagent/agentcore/cognito_auth_scope    # OAuth2 Scope (default: "openid")
+/app/devopsagent/agentcore/cognito_discovery_url # OIDC Discovery URL
+/app/devopsagent/agentcore/gateway_id            # Bedrock AgentCore Gateway ID
+/app/devopsagent/agentcore/gateway_iam_role      # Gateway IAM Role ARN
+```
+
+For detailed authentication flow documentation, see [Cognito Authentication Documentation](cognito_authentication_documentation.md).
+
 ## Architecture
 
 ### Core Components
@@ -226,9 +246,14 @@ Memory ID is automatically stored in SSM Parameter Store at:
 ### AWS Services Used
 
 - **Amazon Bedrock**: LLM inference and model hosting
-- **Amazon Bedrock AgentCore Memory**: Conversation persistence
-- **SSM Parameter Store**: Configuration storage
+- **Amazon Bedrock AgentCore Memory**: Conversation persistence and semantic search
+- **Amazon Bedrock AgentCore Gateway**: MCP tool integration with secure authentication
+- **Amazon Cognito**: User Pool for OAuth2 authentication and JWT token management
+- **SSM Parameter Store**: Configuration storage and authentication parameters
 - **STS**: Identity and credential management
+- **AWS Lambda**: Web search function deployment and execution
+- **IAM**: Lambda execution roles and gateway permissions
+- **CloudWatch**: Lambda function logging and monitoring
 
 ## Target Users
 
@@ -455,14 +480,17 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-### Latest Status (August 17, 2025)
+### Latest Status (August 20, 2025)
 ✅ **ALL FUNCTIONALITIES WORKING**: Complete system verification completed - all core systems operational
 ✅ **AWS Integration**: Current AWS account, us-east-1 region, all permissions verified, 25 Claude models available
 ✅ **Memory System**: DevOpsAgentMemory-xiyfGc4tS2 active, SSM integration working, cross-session persistence verified
 ✅ **Agent Framework**: Strands Agents v1.4.0, Claude Sonnet 4 model, temperature 0.3 optimized for technical accuracy
 ✅ **Web Search**: DuckDuckGo integration fully functional with rate limiting and error handling
+✅ **Cognito Authentication**: Complete OAuth2 Client Credentials flow with JWT token authentication
+✅ **MCP Gateway Integration**: Bedrock AgentCore Gateway with secure authentication and tool access
 ✅ **Performance**: 2-3s startup, 1-5s response time, <1s memory retrieval, graceful error recovery
 ✅ **Security**: IAM roles, encrypted SSM parameters, comprehensive error handling, AWS best practices
 ✅ **Kiro IDE Integration**: Active agent hooks for code quality analysis and documentation sync
 ✅ **Testing Suite**: All permission tests passed, memory tests successful, agent response tests verified
+✅ **Documentation**: Complete authentication flow documentation with diagrams and troubleshooting
 ✅ **Production Ready**: Complete documentation, comprehensive testing, ready for production use and development
