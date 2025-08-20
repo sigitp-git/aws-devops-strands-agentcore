@@ -13,6 +13,15 @@
 ├── check_permissions.py # AWS permission validation tool
 ├── test_memory_save.py  # Memory functionality testing
 ├── debug_memory.py      # Memory troubleshooting utilities
+├── lambda/              # AWS Lambda functions and deployment
+│   ├── lambda_websearch.py      # Web search Lambda function
+│   ├── lambda_requirements.txt  # Lambda dependencies
+│   ├── deploy_lambda.sh         # Lambda deployment script
+│   ├── test_lambda_local.py     # Local Lambda testing
+│   ├── lambda_integration.py    # Agent integration code
+│   ├── lambda_package/          # Lambda deployment package
+│   ├── test_payload.json        # Test payloads
+│   └── response.json            # Test responses
 └── .kiro/               # Kiro IDE configuration and steering rules
     ├── hooks/           # Agent hooks for automated tasks
     └── steering/        # AI assistant guidance documents
@@ -75,6 +84,40 @@
 - Memory resource investigation
 - SSM parameter validation
 - Memory creation capability testing
+
+## Lambda Directory
+
+### lambda_websearch.py
+- AWS Lambda function for web search functionality
+- DuckDuckGo search integration with DDGS library
+- Comprehensive error handling and rate limit management
+- Structured JSON response format
+
+### lambda_requirements.txt
+- Lambda-specific Python dependencies
+- DuckDuckGo search library and supporting packages
+- Optimized for AWS Lambda runtime environment
+
+### deploy_lambda.sh
+- Automated Lambda deployment script
+- Package creation and dependency installation
+- IAM role creation and function deployment
+- Automated testing and validation
+
+### test_lambda_local.py
+- Local Lambda function testing without AWS deployment
+- Multiple test scenarios including error cases
+- Mock context object for Lambda runtime simulation
+
+### lambda_integration.py
+- Integration code for connecting Lambda with main agent
+- AWS Lambda invocation utilities
+- Response parsing and error handling
+
+### lambda_package/
+- Deployment package directory
+- Contains Lambda function code and dependencies
+- Generated during deployment process
 
 ## Kiro IDE Configuration
 

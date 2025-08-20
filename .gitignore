@@ -193,3 +193,7 @@ aws-credentials.json
 secrets.json
 config.json
 .secrets
+
+# Lambda package
+lambda_package/
+*.zip

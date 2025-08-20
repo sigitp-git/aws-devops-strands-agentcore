@@ -167,6 +167,38 @@ python3 debug_memory.py
 ```
 Advanced troubleshooting for memory resource problems and SSM parameter validation.
 
+### Lambda Web Search Function
+
+The project includes a deployable AWS Lambda function for web search capabilities:
+
+**Deploy the Lambda function:**
+```bash
+cd lambda/
+chmod +x deploy_lambda.sh
+./deploy_lambda.sh
+```
+
+**Test the Lambda function locally:**
+```bash
+cd lambda/
+python3 test_lambda_local.py
+```
+
+**Test the deployed Lambda function:**
+```bash
+cd lambda/
+aws lambda invoke --function-name devops-agent-websearch \
+  --payload '{"keywords": "terraform aws provider", "max_results": 3}' \
+  response.json
+```
+
+**Lambda Function Features:**
+- **Function Name**: `devops-agent-websearch`
+- **Runtime**: Python 3.11 with 256MB memory
+- **Web Search**: DuckDuckGo integration with rate limit handling
+- **Error Handling**: Comprehensive validation and error responses
+- **CloudWatch Logging**: Full logging for debugging and monitoring
+
 ## Configuration
 
 ### Core Settings
@@ -230,6 +262,15 @@ The agent includes comprehensive error handling with:
 ├── check_permissions.py # AWS permission validation tool
 ├── test_memory_save.py  # Memory functionality testing
 ├── debug_memory.py      # Memory troubleshooting utilities
+├── lambda/              # AWS Lambda functions and deployment
+│   ├── lambda_websearch.py      # Web search Lambda function
+│   ├── lambda_requirements.txt  # Lambda dependencies
+│   ├── deploy_lambda.sh         # Lambda deployment script
+│   ├── test_lambda_local.py     # Local Lambda testing
+│   ├── lambda_integration.py    # Agent integration code
+│   ├── lambda_package/          # Lambda deployment package
+│   ├── test_payload.json        # Test payloads
+│   └── response.json            # Test responses
 └── .kiro/               # Kiro IDE configuration and steering rules
     ├── hooks/           # Agent hooks for automated tasks
     └── steering/        # AI assistant guidance documents

@@ -16,6 +16,9 @@
 - **SSM Parameter Store**: Configuration and memory ID storage
 - **STS**: Identity and credential management
 - **Amazon Bedrock AgentCore Memory**: Conversation persistence and retrieval
+- **AWS Lambda**: Web search function deployment and execution
+- **IAM**: Lambda execution roles and permissions
+- **CloudWatch**: Lambda function logging and monitoring
 
 ## Configuration
 - **Region**: us-east-1 (default)
@@ -47,6 +50,12 @@ python3 debug_memory.py
 
 # Run the agent
 python3 agent.py
+
+# Deploy Lambda function
+cd lambda/ && ./deploy_lambda.sh
+
+# Test Lambda locally
+cd lambda/ && python3 test_lambda_local.py
 ```
 
 ### AWS Configuration

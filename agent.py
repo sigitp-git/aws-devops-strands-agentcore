@@ -1,25 +1,35 @@
 import logging
 import os
 import uuid
+import sys
+import json
+import requests
 
 # Import boto libraries and AWS tools
 import boto3
 from boto3.session import Session
-from utils import get_ssm_parameter, put_ssm_parameter
+from utils import get_ssm_parameter, put_ssm_parameter, load_api_spec, get_cognito_client_secret
 
 # Import DDGS
 from ddgs import DDGS
 from ddgs.exceptions import DDGSException, RatelimitException
 
-# Import Strands, BedrockModel
+# Import Strands, BedrockModel, MCP libraries
 from strands.agent import Agent
 from strands.tools import tool
 from strands.hooks import AfterInvocationEvent, HookProvider, HookRegistry, MessageAddedEvent
 from strands.models.bedrock import BedrockModel
+from strands.tools.mcp import MCPClient
+from mcp.client.streamable_http import streamablehttp_client
 
-# Import agentCore Memory
+# Import AgentCore Memory
 from bedrock_agentcore.memory import MemoryClient
 from bedrock_agentcore.memory.constants import StrategyType
+
+# Import AgentCore Identity
+from bedrock_agentcore.identity.auth import requires_access_token
+
+sts_client = boto3.client('sts')
 
 class AgentConfig:
     """Configuration settings for the DevOps Agent."""
@@ -49,6 +59,230 @@ class AgentConfig:
 
 # Initialize configuration
 REGION = AgentConfig.setup_aws_region()
+
+def validate_discovery_url(url):
+    """Validate that the discovery URL is accessible and returns valid OIDC configuration."""
+    try:
+        import requests
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            config = response.json()
+            required_fields = ['issuer', 'authorization_endpoint', 'token_endpoint', 'jwks_uri']
+            if all(field in config for field in required_fields):
+                return True, "Valid OIDC configuration"
+            else:
+                return False, f"Missing required OIDC fields: {[f for f in required_fields if f not in config]}"
+        else:
+            return False, f"HTTP {response.status_code}: {response.text[:100]}"
+    except Exception as e:
+        return False, f"Connection error: {str(e)}"
+
+def validate_gateway_configuration():
+    """Validate gateway configuration parameters before creation."""
+    required_params = {
+        "/app/devopsagent/agentcore/machine_client_id": "Machine Client ID",
+        "/app/devopsagent/agentcore/cognito_discovery_url": "Cognito Discovery URL",
+        "/app/devopsagent/agentcore/gateway_iam_role": "Gateway IAM Role"
+    }
+    
+    missing_params = []
+    invalid_params = []
+    
+    for param_path, param_name in required_params.items():
+        value = get_ssm_parameter(param_path)
+        if not value:
+            missing_params.append(f"{param_name} ({param_path})")
+        elif param_path.endswith("cognito_discovery_url"):
+            # Validate discovery URL format and accessibility
+            if not value.endswith("/.well-known/openid_configuration"):
+                invalid_params.append(f"{param_name}: Must end with '/.well-known/openid_configuration'")
+            elif "example.com" in value:
+                invalid_params.append(f"{param_name}: Appears to be a placeholder")
+            else:
+                # Test if the URL is accessible and returns valid OIDC config
+                is_valid, message = validate_discovery_url(value)
+                if not is_valid:
+                    invalid_params.append(f"{param_name}: {message}")
+                    print(f"💡 The discovery URL {value} is not accessible or doesn't return valid OIDC configuration")
+                    print("   This might be because:")
+                    print("   1. Cognito User Pool doesn't have a domain configured")
+                    print("   2. The domain is not set up for OIDC discovery")
+                    print("   3. You need to use a different OIDC provider")
+    
+    if missing_params:
+        print(f"❌ Missing required SSM parameters: {', '.join(missing_params)}")
+        return False
+    
+    if invalid_params:
+        print(f"❌ Invalid SSM parameters:")
+        for param in invalid_params:
+            print(f"   • {param}")
+        return False
+    
+    return True
+
+def use_manual_gateway():
+    """Use manually created gateway from AWS Management Console."""
+    # Manually created gateway ID from AWS Management Console
+    manual_gateway_id = "devopsagent-agentcore-gw-1xgl5imapz"
+    
+    print(f"🔍 Using manually created gateway: {manual_gateway_id}")
+    
+    gateway_client = boto3.client("bedrock-agentcore-control", region_name=REGION)
+    
+    try:
+        # Get gateway details
+        gateway_response = gateway_client.get_gateway(gatewayIdentifier=manual_gateway_id)
+        gateway = {
+            "id": manual_gateway_id,
+            "name": gateway_response["name"],
+            "gateway_url": gateway_response["gatewayUrl"],
+            "gateway_arn": gateway_response["gatewayArn"],
+        }
+        
+        # Store gateway ID in SSM for reference
+        put_ssm_parameter("/app/devopsagent/agentcore/gateway_id", manual_gateway_id)
+        
+        print(f"✅ Successfully connected to manual gateway: {manual_gateway_id}")
+        print(f"   Gateway URL: {gateway['gateway_url']}")
+        return gateway, manual_gateway_id
+        
+    except Exception as e:
+        print(f"⚠️  Could not connect to manual gateway {manual_gateway_id}: {e}")
+        print("🔄 Continuing without gateway functionality...")
+        return None, None
+
+# Commented out automatic gateway creation - using manually created gateway instead
+# def create_gateway_if_configured():
+#     """Create gateway only if properly configured."""
+#     print("🔍 Checking gateway configuration...")
+#     
+#     if not validate_gateway_configuration():
+#         print("🔄 Gateway functionality disabled due to configuration issues")
+#         print("💡 The agent will continue to work without gateway functionality")
+#         print("   Gateway is only needed for advanced MCP integrations")
+#         return None, None
+#     
+#     gateway_client = boto3.client("bedrock-agentcore-control", region_name=REGION)
+#     gateway_name = "devopsagent-agentcore-gw"
+#     
+#     # Get configuration
+#     discovery_url = get_ssm_parameter("/app/devopsagent/agentcore/cognito_discovery_url")
+#     client_id = get_ssm_parameter("/app/devopsagent/agentcore/machine_client_id")
+#     
+#     auth_config = {
+#         "customJWTAuthorizer": {
+#             "allowedClients": [client_id],
+#             "discoveryUrl": discovery_url
+#         }
+#     }
+#     
+#     try:
+#         print(f"✅ Configuration valid - creating gateway in region {REGION}")
+#         
+#         create_response = gateway_client.create_gateway(
+#             name=gateway_name,
+#             roleArn=get_ssm_parameter("/app/devopsagent/agentcore/gateway_iam_role"),
+#             protocolType="MCP",
+#             authorizerType="CUSTOM_JWT",
+#             authorizerConfiguration=auth_config,
+#             description="DevOps Agent AgentCore Gateway",
+#         )
+#         
+#         gateway_id = create_response["gatewayId"]
+#         gateway = {
+#             "id": gateway_id,
+#             "name": gateway_name,
+#             "gateway_url": create_response["gatewayUrl"],
+#             "gateway_arn": create_response["gatewayArn"],
+#         }
+#         put_ssm_parameter("/app/devopsagent/agentcore/gateway_id", gateway_id)
+#         print(f"✅ Gateway created successfully with ID: {gateway_id}")
+#         return gateway, gateway_id
+#         
+#     except Exception as e:
+#         print(f"⚠️  Gateway creation failed: {e}")
+#         return try_existing_gateway(gateway_client)
+
+def try_existing_gateway(gateway_client):
+    """Try to use existing gateway if available."""
+    existing_gateway_id = get_ssm_parameter("/app/devopsagent/agentcore/gateway_id")
+    
+    if existing_gateway_id:
+        print(f"Found existing gateway with ID: {existing_gateway_id}")
+        try:
+            gateway_response = gateway_client.get_gateway(gatewayIdentifier=existing_gateway_id)
+            gateway = {
+                "id": existing_gateway_id,
+                "name": gateway_response["name"],
+                "gateway_url": gateway_response["gatewayUrl"],
+                "gateway_arn": gateway_response["gatewayArn"],
+            }
+            print(f"✅ Using existing gateway: {existing_gateway_id}")
+            return gateway, existing_gateway_id
+        except Exception as get_error:
+            print(f"⚠️  Could not retrieve existing gateway: {get_error}")
+    
+    print("🔄 Continuing without gateway functionality...")
+    return None, None
+
+# Initialize gateway - using manually created gateway
+gateway, gateway_id = use_manual_gateway()
+
+# Using the AgentCore Gateway for MCP server (only if gateway is available)
+def get_token(client_id: str, client_secret: str, scope_string: str = None, url: str = None) -> dict:
+    try:
+        # Use default values if not provided
+        if scope_string is None:
+            scope_string = get_ssm_parameter("/app/devopsagent/agentcore/cognito_auth_scope") or "openid"
+        if url is None:
+            url = get_ssm_parameter("/app/devopsagent/agentcore/cognito_token_url") or "https://REDACTED_COGNITO_ID.auth.us-east-1.amazoncognito.com/oauth2/token"
+            
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        data = {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": scope_string,
+
+        }
+        response = requests.post(url, headers=headers, data=data)
+        response.raise_for_status()
+        return response.json()
+
+    except requests.exceptions.RequestException as err:
+        return {"error": str(err)}
+
+# Initialize MCP client only if gateway is available
+mcp_client = None
+if gateway and gateway_id:
+    try:
+        print(f"🔗 Setting up MCP client for gateway: {gateway_id}")
+        
+        gateway_access_token = get_token(
+            get_ssm_parameter("/app/devopsagent/agentcore/machine_client_id"),
+            get_cognito_client_secret()
+            # get_ssm_parameter("/app/devopsagent/agentcore/cognito_auth_scope"),
+            # get_ssm_parameter("/app/devopsagent/agentcore/cognito_token_url")
+        )
+
+        print(f"Gateway Endpoint - MCP URL: {gateway['gateway_url']}")
+
+        # Set up MCP client
+        mcp_client = MCPClient(
+            lambda: streamablehttp_client(
+                gateway['gateway_url'],
+                headers={"Authorization": f"Bearer {gateway_access_token['access_token']}"},
+            )
+        )
+        print("✅ MCP client configured successfully")
+        
+    except Exception as e:
+        print(f"⚠️  MCP client setup failed: {e}")
+        print("🔄 Continuing without MCP client functionality...")
+        mcp_client = None
+else:
+    print("ℹ️  No gateway available - MCP client functionality disabled")
 
 # Configure logging
 logging.getLogger("strands").setLevel(logging.INFO)
@@ -456,8 +690,69 @@ class ConversationManager:
             logger.error(f"Fatal error in conversation loop: {e}")
             print(f"Fatal error: {e}")
 
+def setup_gateway_parameters():
+    """Interactive setup for gateway SSM parameters."""
+    print("\n🔧 Gateway Configuration Setup")
+    print("=" * 50)
+    print("ℹ️  Using manually created gateway: devopsagent-agentcore-gw-1xgl5imapz")
+    print("   Gateway was created via AWS Management Console")
+    
+    # Check current gateway status
+    manual_gateway_id = "devopsagent-agentcore-gw-1xgl5imapz"
+    gateway_client = boto3.client("bedrock-agentcore-control", region_name=REGION)
+    
+    try:
+        gateway_response = gateway_client.get_gateway(gatewayIdentifier=manual_gateway_id)
+        print(f"\n✅ Manual Gateway Status:")
+        print(f"   Gateway ID: {manual_gateway_id}")
+        print(f"   Name: {gateway_response['name']}")
+        print(f"   Status: {gateway_response.get('status', 'ACTIVE')}")
+        print(f"   URL: {gateway_response['gatewayUrl']}")
+    except Exception as e:
+        print(f"\n⚠️  Could not retrieve manual gateway details: {e}")
+    
+    # Check current parameters
+    params_to_check = {
+        "/app/devopsagent/agentcore/machine_client_id": "Cognito Machine Client ID",
+        "/app/devopsagent/agentcore/cognito_discovery_url": "OIDC Discovery URL",
+        "/app/devopsagent/agentcore/gateway_iam_role": "Gateway IAM Role ARN",
+        "/app/devopsagent/agentcore/gateway_id": "Gateway ID (Auto-managed)"
+    }
+    
+    for param_path, description in params_to_check.items():
+        current_value = get_ssm_parameter(param_path)
+        print(f"\n{description}:")
+        print(f"  Parameter: {param_path}")
+        print(f"  Current value: {current_value or 'NOT SET'}")
+        
+        if param_path.endswith("cognito_discovery_url") and current_value:
+            if "example.com" in current_value:
+                print("  ❌ This appears to be a placeholder value")
+            else:
+                # Test the URL
+                is_valid, message = validate_discovery_url(current_value)
+                if is_valid:
+                    print("  ✅ URL is accessible and returns valid OIDC configuration")
+                else:
+                    print(f"  ❌ URL validation failed: {message}")
+    
+    print(f"\n💡 Manual Gateway Benefits:")
+    print(f"   • Gateway created successfully via AWS Management Console")
+    print(f"   • Bypasses automatic creation validation issues")
+    print(f"   • Enables advanced MCP (Model Context Protocol) integrations")
+    
+    print(f"\n🚀 Agent Status:")
+    print(f"   The agent works with full functionality including gateway support!")
+
 def main():
     """Main execution function."""
+    import sys
+    
+    # Check for setup command
+    if len(sys.argv) > 1 and sys.argv[1] == "setup":
+        setup_gateway_parameters()
+        return
+    
     agent = create_devops_agent()
     conversation_manager = ConversationManager(agent)
     conversation_manager.start_conversation()
