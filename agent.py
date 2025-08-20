@@ -261,10 +261,21 @@ if gateway and gateway_id:
         
         gateway_access_token = get_token(
             get_ssm_parameter("/app/devopsagent/agentcore/machine_client_id"),
-            get_cognito_client_secret()
-            # get_ssm_parameter("/app/devopsagent/agentcore/cognito_auth_scope"),
-            # get_ssm_parameter("/app/devopsagent/agentcore/cognito_token_url")
+            get_cognito_client_secret(),
+            get_ssm_parameter("/app/devopsagent/agentcore/cognito_auth_scope"),
+            get_ssm_parameter("/app/devopsagent/agentcore/cognito_token_url")
         )
+        
+        print(f"🔍 Debug - Token response: {gateway_access_token}")
+        
+        # Check if we got a valid token
+        if 'error' in gateway_access_token:
+            print(f"❌ Token error: {gateway_access_token['error']}")
+            raise Exception(f"Failed to get access token: {gateway_access_token['error']}")
+        
+        if 'access_token' not in gateway_access_token:
+            print(f"❌ No access_token in response. Available keys: {list(gateway_access_token.keys())}")
+            raise Exception("No access_token in authentication response")
 
         print(f"Gateway Endpoint - MCP URL: {gateway['gateway_url']}")
 
@@ -284,12 +295,61 @@ if gateway and gateway_id:
 else:
     print("ℹ️  No gateway available - MCP client functionality disabled")
 
+# Initialize MCP client if available
+if mcp_client:
+    try:
+        mcp_client.start()
+        print("✅ MCP client started successfully")
+    except Exception as e:
+        print(f"⚠️  MCP client start failed: {str(e)}")
+        print("🔄 Continuing without MCP client functionality...")
+        mcp_client = None
+
 # Configure logging
 logging.getLogger("strands").setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 # Define a websearch tool
+@tool
+def list_mcp_tools() -> str:
+    """List all available MCP tools and their descriptions.
+    
+    Returns:
+        Formatted list of MCP tools with descriptions
+    """
+    if not mcp_client:
+        return "❌ MCP client is not available. No MCP tools are currently accessible."
+    
+    try:
+        mcp_tools = get_full_tools_list(mcp_client)
+        
+        if not mcp_tools:
+            return "ℹ️  No MCP tools are currently available through the gateway."
+        
+        result = f"🔧 **Available MCP Tools ({len(mcp_tools)} total):**\n\n"
+        
+        for i, tool in enumerate(mcp_tools, 1):
+            tool_name = getattr(tool, 'name', 'Unknown')
+            tool_description = getattr(tool, 'description', 'No description available')
+            
+            # Try to get input schema if available
+            input_schema = getattr(tool, 'inputSchema', None)
+            parameters = ""
+            if input_schema and hasattr(input_schema, 'properties'):
+                param_names = list(input_schema.properties.keys()) if input_schema.properties else []
+                if param_names:
+                    parameters = f" (Parameters: {', '.join(param_names)})"
+            
+            result += f"{i}. **{tool_name}**{parameters}\n"
+            result += f"   {tool_description}\n\n"
+        
+        result += "💡 These tools are available through the MCP gateway integration and can be used for advanced functionality."
+        return result
+        
+    except Exception as e:
+        return f"❌ Error retrieving MCP tools: {str(e)}"
+
 @tool
 def websearch(
     keywords: str, region: str = AgentConfig.SEARCH_REGION, max_results: int | None = None
@@ -627,6 +687,68 @@ def create_agent_hooks(memory_id: str | None) -> list:
     logger.info("Memory hooks enabled")
     return [memory_hooks]
 
+def get_full_tools_list(client):
+    """
+    List tools w/ support for pagination
+    """
+    try:
+        more_tools = True
+        tools = []
+        pagination_token = None
+        max_iterations = 10  # Prevent infinite loops
+        iteration = 0
+        
+        while more_tools and iteration < max_iterations:
+            iteration += 1
+            print(f"🔍 Fetching MCP tools (iteration {iteration})...")
+            
+            tmp_tools = client.list_tools_sync(pagination_token=pagination_token)
+            
+            if hasattr(tmp_tools, '__iter__'):
+                # If tmp_tools is a list/iterable of tools
+                tools.extend(tmp_tools)
+                more_tools = False  # Assume no pagination if we get a simple list
+            elif hasattr(tmp_tools, 'tools'):
+                # If tmp_tools has a tools attribute
+                tools.extend(tmp_tools.tools)
+                if hasattr(tmp_tools, 'pagination_token') and tmp_tools.pagination_token:
+                    pagination_token = tmp_tools.pagination_token
+                else:
+                    more_tools = False
+            else:
+                # Fallback - treat as single tool or list
+                if tmp_tools:
+                    tools.extend([tmp_tools] if not hasattr(tmp_tools, '__iter__') else tmp_tools)
+                more_tools = False
+                
+        print(f"✅ Retrieved {len(tools)} MCP tools total")
+        return tools
+        
+    except Exception as e:
+        print(f"⚠️  Error in get_full_tools_list: {e}")
+        # Fallback to simple list_tools_sync
+        try:
+            simple_tools = client.list_tools_sync()
+            return simple_tools if hasattr(simple_tools, '__iter__') else [simple_tools] if simple_tools else []
+        except Exception as fallback_error:
+            print(f"⚠️  Fallback also failed: {fallback_error}")
+            return []
+
+def create_tools_list():
+    """Create the list of tools for the agent."""
+    tools_list = [websearch, list_mcp_tools]
+    
+    # Add MCP tools if available
+    if mcp_client:
+        try:
+            mcp_tools = get_full_tools_list(mcp_client)
+            tools_list.extend(mcp_tools)
+            print(f"✅ Added {len(mcp_tools)} MCP tools (with pagination support)")
+        except Exception as e:
+            print(f"⚠️  Could not get MCP tools: {e}")
+    
+    return tools_list
+
 def create_devops_agent() -> Agent:
     """Create and configure the DevOps agent."""
     hooks = create_agent_hooks(memory_id)
@@ -648,7 +770,7 @@ NON-FUNCTIONAL RULES:
 - Always offer additional help after answering questions
 - If you can't help with something, direct users to the appropriate contact
 """,
-        tools=[websearch],
+        tools=create_tools_list(),
     )
 
 class ConversationManager:
