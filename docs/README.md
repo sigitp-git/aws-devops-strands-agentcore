@@ -4,8 +4,10 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 
 ## 📚 Documentation
 
+- **[Quick Setup Guide](SETUP.md)** - 5-minute setup instructions
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment options (local, cloud, Lambda)
 - **[Streamlit Frontend](STREAMLIT_FRONTEND.md)** - Web UI for interactive chat experience
+- **[IAM Policies Guide](../iampolicies/README.md)** - Security policies and role configuration
 - **[Authentication Guide](AUTHENTICATION.md)** - OAuth2 flow and security configuration  
 - **[Development Guide](DEVELOPMENT.md)** - Setup, testing, and technical implementation
 - **[System Status](STATUS.md)** - Current functionality and performance status

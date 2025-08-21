@@ -8,6 +8,14 @@
 ├── utils.py              # Utility functions for AWS services and config
 ├── requirements.txt      # Python dependencies
 ├── README.md            # Quick start guide (points to docs/)
+├── iampolicies/          # IAM policies and security configuration
+│   ├── agentcore-policy.json    # AgentCore Runtime execution permissions
+│   ├── trust-policy.json        # Trust relationship for execution role
+│   ├── lambda-execution-policy.json # Lambda function execution permissions
+│   ├── lambda-trust-policy.json     # Lambda function trust relationship
+│   ├── developer-policy.json        # Developer permissions for deployment
+│   ├── create-iam-roles.sh          # Script to create all IAM roles
+│   └── README.md                     # IAM policies documentation
 ├── streamlit/            # Streamlit web interface directory
 │   ├── streamlit_app.py  # Main Streamlit application
 │   ├── run_streamlit.sh  # Streamlit launch script
@@ -17,6 +25,7 @@
 ├── LICENSE              # MIT License file
 ├── .gitignore           # Git exclusions (Python, AWS, IDE files)
 │   ├── README.md        # Main project documentation
+│   ├── SETUP.md         # Quick setup guide (5-minute setup)
 │   ├── DEPLOYMENT.md    # Complete deployment guide
 │   ├── STREAMLIT_FRONTEND.md # Streamlit web interface guide
 │   ├── AUTHENTICATION.md # Complete authentication flow documentation

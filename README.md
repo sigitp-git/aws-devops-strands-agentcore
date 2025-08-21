@@ -4,9 +4,11 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 
 ## 📚 Documentation
 
+- **[Quick Setup Guide](docs/SETUP.md)** - 5-minute setup instructions
 - **[Complete Guide](docs/README.md)** - Installation, usage, and architecture
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - All deployment options (local, cloud, Lambda)
 - **[Streamlit Frontend](docs/STREAMLIT_FRONTEND.md)** - Web UI for interactive chat experience
+- **[IAM Policies Guide](iampolicies/README.md)** - Security policies and role configuration
 - **[Authentication Guide](docs/AUTHENTICATION.md)** - OAuth2 flow and security configuration  
 - **[Development Guide](docs/DEVELOPMENT.md)** - Setup, testing, and technical implementation
 - **[System Status](docs/STATUS.md)** - Current functionality and performance status
@@ -24,17 +26,28 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 
 ## 🚀 Quick Start
 
+> 📖 **For detailed setup instructions, see the [Quick Setup Guide](docs/SETUP.md)**
+
 ### Prerequisites
 - Python 3.8+, AWS CLI configured, Access to Amazon Bedrock
 - Docker with buildx support (for deployment)
 - AWS region: `us-east-1` (default)
 
-### Installation
+### 5-Minute Setup
 ```bash
+# 1. Clone and install
 git clone https://github.com/sigitp-git/aws-devops-strands-agentcore.git
 cd aws-devops-strands-agentcore
 pip install -r requirements.txt
-aws configure  # Set AWS_DEFAULT_REGION=us-east-1
+
+# 2. Create IAM roles
+cd iampolicies && ./create-iam-roles.sh && cd ..
+
+# 3. Deploy agent
+python3 deploy_runtime.py
+
+# 4. Launch web interface
+./run_streamlit.sh
 ```
 
 ### Usage Options
