@@ -9,3 +9,4 @@ ddgs
 requests
 fastapi
 uvicorn[standard]
+streamlit>=1.28.0

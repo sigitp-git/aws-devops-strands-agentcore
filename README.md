@@ -6,6 +6,7 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 
 - **[Complete Guide](docs/README.md)** - Installation, usage, and architecture
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - All deployment options (local, cloud, Lambda)
+- **[Streamlit Frontend](docs/STREAMLIT_FRONTEND.md)** - Web UI for interactive chat experience
 - **[Authentication Guide](docs/AUTHENTICATION.md)** - OAuth2 flow and security configuration  
 - **[Development Guide](docs/DEVELOPMENT.md)** - Setup, testing, and technical implementation
 - **[System Status](docs/STATUS.md)** - Current functionality and performance status
@@ -38,13 +39,20 @@ aws configure  # Set AWS_DEFAULT_REGION=us-east-1
 
 ### Usage Options
 
-**Local Development:**
+**Web Interface (Recommended):**
+```bash
+# Launch Streamlit web interface
+./run_streamlit.sh
+# Access at http://localhost:8501
+```
+
+**Command Line Interface:**
 ```bash
 # Interactive CLI mode
 python3 agent.py
 
-# Local runtime server
-python3 agent_runtime.py
+# Test deployed agent
+python3 invoke_runtime.py
 ```
 
 **Production Deployment:**
@@ -52,8 +60,8 @@ python3 agent_runtime.py
 # Deploy to AgentCore Runtime
 python3 deploy_runtime.py
 
-# Test deployed agent
-python3 invoke_runtime.py
+# Local runtime server
+python3 agent_runtime.py
 ```
 
 ### Testing
