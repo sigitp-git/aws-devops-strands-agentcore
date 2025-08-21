@@ -8,9 +8,13 @@ import streamlit as st
 import boto3
 import json
 import os
+import sys
 import time
 import uuid
 from datetime import datetime
+
+# Add parent directory to path to import utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import get_ssm_parameter
 
 # Set default AWS region if not already configured

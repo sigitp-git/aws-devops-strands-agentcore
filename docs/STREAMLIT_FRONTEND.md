@@ -40,11 +40,11 @@ A user-friendly web interface for interacting with the AWS DevOps Agent, built w
 
 **Option 1: Using the launch script (Recommended)**
 ```bash
-# Make the script executable (if not already)
-chmod +x run_streamlit.sh
-
-# Launch the Streamlit app
+# From project root - Launch the Streamlit app
 ./run_streamlit.sh
+
+# Or from streamlit directory
+cd streamlit && ./run_streamlit.sh
 ```
 
 **Option 2: Manual launch**
@@ -55,12 +55,16 @@ pip install streamlit>=1.28.0
 # Set AWS region
 export AWS_DEFAULT_REGION=us-east-1
 
-# Run the Streamlit app
+# Navigate to streamlit directory and run the app
+cd streamlit
 streamlit run streamlit_app.py
 ```
 
 **Option 3: Custom configuration**
 ```bash
+# Navigate to streamlit directory
+cd streamlit
+
 # Run with custom port and host
 streamlit run streamlit_app.py --server.port 8502 --server.address localhost
 ```

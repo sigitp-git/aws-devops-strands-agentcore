@@ -17,6 +17,5 @@ if ! python3 -c "import streamlit" 2>/dev/null; then
     pip install streamlit>=1.28.0
 fi
 
-# Change to streamlit directory and run the app
-cd streamlit
-./run_streamlit.sh
+# Run the Streamlit app
+streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0

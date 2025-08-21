@@ -3,12 +3,16 @@
 ## Root Directory Layout
 ```
 ├── agent.py              # Main agent implementation and entry point
-├── streamlit_app.py      # Streamlit web interface for the agent
-├── run_streamlit.sh      # Launch script for Streamlit frontend
 ├── invoke_runtime.py     # Command-line interface for deployed agent
+├── run_streamlit.sh      # Launch script for Streamlit frontend
 ├── utils.py              # Utility functions for AWS services and config
 ├── requirements.txt      # Python dependencies
 ├── README.md            # Quick start guide (points to docs/)
+├── streamlit/            # Streamlit web interface directory
+│   ├── streamlit_app.py  # Main Streamlit application
+│   ├── run_streamlit.sh  # Streamlit launch script
+│   ├── demo_streamlit.py # Demo script showcasing features
+│   └── README.md         # Streamlit directory documentation
 ├── docs/                   # Documentation directory
 ├── LICENSE              # MIT License file
 ├── .gitignore           # Git exclusions (Python, AWS, IDE files)
