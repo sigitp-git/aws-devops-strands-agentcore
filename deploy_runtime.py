@@ -22,7 +22,7 @@ class AgentRuntimeDeployer:
         
         # Configuration
         self.repository_name = "devops-agent-runtime"
-        self.agent_runtime_name = "devops-agent"
+        self.agent_runtime_name = "devops_agent"
         self.image_tag = "latest"
         
         # Get account ID
@@ -149,10 +149,15 @@ class AgentRuntimeDeployer:
             execution_role_arn = self.get_execution_role_arn()
             
             # Check if agent runtime already exists
-            try:
-                existing_runtime = self.agentcore_client.get_agent_runtime(
-                    agentRuntimeName=self.agent_runtime_name
-                )
+            # List all runtimes and find by name
+            runtimes_response = self.agentcore_client.list_agent_runtimes()
+            existing_runtime = None
+            for runtime in runtimes_response.get('agentRuntimes', []):
+                if runtime.get('agentRuntimeName') == self.agent_runtime_name:
+                    existing_runtime = runtime
+                    break
+            
+            if existing_runtime:
                 print(f"⚠️  Agent runtime {self.agent_runtime_name} already exists")
                 print(f"   Status: {existing_runtime.get('status', 'Unknown')}")
                 
@@ -163,7 +168,7 @@ class AgentRuntimeDeployer:
                 
                 # Update existing runtime
                 response = self.agentcore_client.update_agent_runtime(
-                    agentRuntimeName=self.agent_runtime_name,
+                    agentRuntimeId=existing_runtime['agentRuntimeId'],
                     agentRuntimeArtifact={
                         'containerConfiguration': {
                             'containerUri': f"{self.ecr_uri}:{self.image_tag}"
@@ -171,8 +176,7 @@ class AgentRuntimeDeployer:
                     }
                 )
                 print("✅ Agent runtime updated successfully")
-                
-            except self.agentcore_client.exceptions.ResourceNotFoundException:
+            else:
                 # Create new runtime
                 response = self.agentcore_client.create_agent_runtime(
                     agentRuntimeName=self.agent_runtime_name,

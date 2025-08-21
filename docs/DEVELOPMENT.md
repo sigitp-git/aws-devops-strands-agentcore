@@ -10,7 +10,7 @@ This guide covers development setup, testing, debugging, and technical implement
 - AWS CLI configured with appropriate credentials
 - Access to Amazon Bedrock and AgentCore Memory services
 - AWS region set to `us-east-1` (default)
-- Docker with buildx support (for deployment)
+- Docker with buildx support ✅ **INSTALLED AND CONFIGURED**
 
 ### Installation
 
@@ -141,6 +141,18 @@ Comprehensive testing of HTTP API endpoints before deployment.
 python3 tests/test_simple_runtime.py
 ```
 Basic BedrockAgentCoreApp functionality testing.
+
+**Deploy to production:**
+```bash
+python3 deploy_runtime.py
+```
+Deploy to Amazon Bedrock AgentCore Runtime ✅ **COMPLETED**
+
+**Test deployed agent:**
+```bash
+python3 invoke_runtime.py interactive
+```
+Interact with the production-deployed agent.
 
 ### Memory Testing Examples
 

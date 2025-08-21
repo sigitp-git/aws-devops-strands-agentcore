@@ -13,16 +13,18 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 
 - **🧠 Intelligent Memory**: Cross-session persistence with semantic search and preference learning
 - **🔐 Secure Authentication**: OAuth2 Client Credentials flow with Amazon Cognito and JWT tokens
-- **🚀 Dual Deployment**: Local CLI mode and scalable cloud deployment via AgentCore Runtime
+- **🚀 Production Ready**: Successfully deployed to Amazon Bedrock AgentCore Runtime
 - **🔍 Real-time Search**: DuckDuckGo integration with deployable Lambda function
 - **⚡ AWS Expertise**: Specialized knowledge powered by Claude Sonnet 4 (temperature 0.3)
 - **🛠️ MCP Integration**: Advanced tool access through Bedrock AgentCore Gateway
 - **🎯 Kiro IDE Integration**: Automated code quality analysis and documentation sync
+- **📦 ARM64 Optimized**: Docker container built for optimal performance
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.8+, AWS CLI configured, Access to Amazon Bedrock
+- Docker with buildx support (for deployment)
 - AWS region: `us-east-1` (default)
 
 ### Installation
@@ -33,14 +35,24 @@ pip install -r requirements.txt
 aws configure  # Set AWS_DEFAULT_REGION=us-east-1
 ```
 
-### Usage
+### Usage Options
+
+**Local Development:**
 ```bash
-# Local interactive mode
+# Interactive CLI mode
 python3 agent.py
 
-# Test functionality
-python3 tests/check_permissions.py
-python3 tests/test_memory_save.py
+# Local runtime server
+python3 agent_runtime.py
+```
+
+**Production Deployment:**
+```bash
+# Deploy to AgentCore Runtime
+python3 deploy_runtime.py
+
+# Test deployed agent
+python3 invoke_runtime.py
 ```
 
 > 📖 **For detailed setup, deployment options, and troubleshooting, see the [Deployment Guide](DEPLOYMENT.md)**
@@ -103,13 +115,14 @@ DevOps engineers, cloud architects, and AWS practitioners seeking intelligent as
 
 ## 📊 Current Status
 
-✅ **ALL SYSTEMS OPERATIONAL** - Production ready with comprehensive testing  
+✅ **PRODUCTION DEPLOYED** - Successfully deployed to Amazon Bedrock AgentCore Runtime  
+✅ **Runtime ARN** - `arn:aws:bedrock-agentcore:us-east-1:ACCOUNT:runtime/devops_agent-*`  
 ✅ **AWS Integration** - 25 Claude models, all permissions verified  
 ✅ **Memory System** - Cross-session persistence with 100% success rate  
 ✅ **Authentication** - OAuth2 JWT tokens with secure gateway access  
 ✅ **Performance** - 2-3s startup, 1-5s response time, <1s memory retrieval  
 
-> 📖 **For detailed status, performance metrics, and test results, see the [System Status](STATUS.md)**
+> 📖 **For detailed status, performance metrics, and deployment details, see the [System Status](STATUS.md)**
 
 ## 📄 License & Contributing
 

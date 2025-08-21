@@ -10,11 +10,17 @@ This comprehensive guide covers all deployment options for the AWS DevOps Agent,
 - **Features**: Interactive conversation, full memory integration, MCP tools
 - **Purpose**: Development, testing, and local usage
 
-### 2. **AgentCore Runtime Mode** (Production)
+### 2. **Local Runtime Mode** (Testing)
 - **File**: `agent_runtime.py`
-- **Usage**: HTTP API endpoints (`/invocations`, `/ping`)
-- **Features**: Containerized deployment, scalable cloud hosting
-- **Purpose**: Production deployment, API integration
+- **Usage**: `python3 agent_runtime.py`
+- **Features**: HTTP API endpoints (`/invocations`, `/ping`)
+- **Purpose**: Local testing of production API
+
+### 3. **AgentCore Runtime Mode** (Production) ✅ **DEPLOYED**
+- **Deployment**: `python3 deploy_runtime.py`
+- **Runtime ARN**: `arn:aws:bedrock-agentcore:us-east-1:ACCOUNT:runtime/devops_agent-*`
+- **Features**: Managed AWS service, auto-scaling, monitoring
+- **Purpose**: Production deployment with AWS managed infrastructure
 
 ## AgentCore Runtime Features
 
@@ -43,26 +49,25 @@ python3 agent_runtime.py &
 curl -X POST http://localhost:8080/invocations -H "Content-Type: application/json" -d '{"prompt": "Hello"}'
 ```
 
-### Cloud Deployment
+### Production Deployment ✅ **COMPLETED**
 
-Deploy to AWS with the automated script:
+The agent has been successfully deployed to Amazon Bedrock AgentCore Runtime:
 
 ```bash
-# Deploy to AgentCore Runtime
+# Deploy to AgentCore Runtime (already completed)
 python3 deploy_runtime.py
 ```
 
-This will:
-- Create ECR repository
-- Build ARM64 Docker image
-- Push to ECR
-- Deploy to AgentCore Runtime
-- Test the deployment
+**Deployment Results:**
+- ✅ **Runtime ARN**: `arn:aws:bedrock-agentcore:us-east-1:ACCOUNT:runtime/devops_agent-*`
+- ✅ **Status**: Successfully deployed and operational
+- ✅ **Container**: ARM64 Docker image in ECR
+- ✅ **IAM Role**: `AgentRuntimeExecutionRole` with proper permissions
 
 ### Using Deployed Agent
 
 ```bash
-# Interactive mode
+# Interactive mode with deployed agent
 python3 invoke_runtime.py interactive
 
 # Single invocation
@@ -124,9 +129,9 @@ Health check endpoint.
 
 ## Configuration
 
-### Required IAM Role
+### IAM Role Configuration ✅ **CONFIGURED**
 
-Create an execution role with these permissions:
+The deployment script automatically created the `AgentRuntimeExecutionRole` with these permissions:
 
 ```json
 {
@@ -136,7 +141,8 @@ Create an execution role with these permissions:
       "Effect": "Allow",
       "Action": [
         "bedrock:InvokeModel",
-        "bedrock:InvokeModelWithResponseStream"
+        "bedrock:InvokeModelWithResponseStream",
+        "bedrock:ListFoundationModels"
       ],
       "Resource": "*"
     },
@@ -170,20 +176,53 @@ Create an execution role with these permissions:
         "cognito-idp:*"
       ],
       "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "lambda:InvokeFunction"
+      ],
+      "Resource": "arn:aws:lambda:*:*:function:devops-agent-*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+      ],
+      "Resource": "*"
     }
   ]
 }
 ```
 
-### SSM Parameters
+**Trust Policy:**
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "bedrock-agentcore.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
 
-The deployment script will create/use these SSM parameters:
+### SSM Parameters ✅ **CONFIGURED**
 
-- `/app/devopsagent/agentcore/execution_role_arn` - IAM role for runtime
-- `/app/devopsagent/agentcore/runtime_arn` - Deployed agent ARN
-- `/app/devopsagent/agentcore/gateway_id` - MCP Gateway ID
-- `/app/devopsagent/agentcore/machine_client_id` - Cognito client ID
-- `/app/devopsagent/agentcore/cognito_discovery_url` - OIDC discovery URL
+The deployment script created/uses these SSM parameters:
+
+- `/app/devopsagent/agentcore/execution_role_arn` - IAM role for runtime ✅
+- `/app/devopsagent/agentcore/runtime_arn` - Deployed agent ARN ✅
+- `/app/devopsagent/agentcore/gateway_id` - MCP Gateway ID ✅
+- `/app/devopsagent/agentcore/machine_client_id` - Cognito client ID ✅
+- `/app/devopsagent/agentcore/cognito_discovery_url` - OIDC discovery URL ✅
+- `/app/devopsagent/agentcore/memory_id` - AgentCore Memory resource ID ✅
 
 ## Manual Deployment
 
@@ -327,13 +366,16 @@ aws logs tail /aws/bedrock-agentcore/your-agent-name --follow
 3. **Deploy to AWS** with `deploy_runtime.py`
 4. **Invoke remotely** with `invoke_runtime.py`
 
-## Status
+## Deployment Status
 
 - ✅ **Local CLI Mode** - Fully operational
-- ✅ **AgentCore Runtime** - Production ready
-- ✅ **MCP Integration** - All tools working
-- ✅ **Web Search** - Optimized usage
-- ✅ **Error Handling** - Comprehensive
+- ✅ **Local Runtime Mode** - HTTP API server working
+- ✅ **AgentCore Runtime** - **SUCCESSFULLY DEPLOYED TO PRODUCTION**
+- ✅ **Docker Image** - ARM64 container built and pushed to ECR
+- ✅ **IAM Configuration** - Execution role created with proper permissions
+- ✅ **MCP Integration** - All tools working with secure authentication
+- ✅ **Web Search** - Lambda function deployed and operational
+- ✅ **Error Handling** - Comprehensive validation and recovery
 - ✅ **Performance** - Optimized for cloud deployment
 #
 # Lambda Web Search Function

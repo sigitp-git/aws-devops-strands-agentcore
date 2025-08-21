@@ -10,15 +10,11 @@
 ├── LICENSE              # MIT License file
 ├── .gitignore           # Git exclusions (Python, AWS, IDE files)
 │   ├── README.md        # Main project documentation
-│   ├── notes.md         # Development notes and testing results
-│   ├── model_temperature.md # Documentation on model temperature settings
-│   ├── cognito_authentication_documentation.md # Complete authentication flow documentation
-│   ├── FUNCTIONALITY_STATUS.md # Comprehensive system status report
-│   ├── DOCUMENTATION_STATUS.md # Documentation completeness tracking
-│   ├── SYSTEM_OVERVIEW.md # System architecture overview
-│   ├── README_RUNTIME.md # AgentCore Runtime deployment guide
-│   ├── AGENTCORE_RUNTIME_SUMMARY.md # Runtime integration summary
-│   └── RUNTIME_STATUS_FINAL.md # Final runtime status
+│   ├── DEPLOYMENT.md    # Complete deployment guide
+│   ├── AUTHENTICATION.md # Complete authentication flow documentation
+│   ├── DEVELOPMENT.md   # Development guide and testing
+│   ├── STATUS.md        # System status and functionality reports
+│   └── notes.md         # Development notes and testing results
 ├── tests/               # Testing and debugging utilities
 │   ├── check_permissions.py # AWS permission validation tool
 │   ├── test_memory_save.py  # Memory functionality testing

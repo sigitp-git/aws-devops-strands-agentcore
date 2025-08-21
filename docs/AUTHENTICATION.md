@@ -6,7 +6,7 @@ The AWS DevOps Agent uses Amazon Cognito User Pool for authentication to access 
 
 ## Architecture Diagram
 
-![Cognito Authentication Flow](./diagrams/cognito_auth_flow_diagram.png.png)
+![Cognito Authentication Flow](../diagrams/cognito_auth_flow_diagram.png)
 
 ## Authentication Flow
 
