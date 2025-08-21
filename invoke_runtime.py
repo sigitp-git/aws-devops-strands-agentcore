@@ -44,7 +44,7 @@ class AgentRuntimeInvoker:
                 return None
             
             if not session_id:
-                session_id = f"session-{uuid.uuid4()}"
+                session_id = f"session-{uuid.uuid4()}-{int(time.time())}"
             
             # Prepare payload
             payload = {
@@ -99,7 +99,7 @@ class AgentRuntimeInvoker:
         print("Type 'help' for usage tips")
         print()
         
-        session_id = f"interactive-{int(time.time())}"
+        session_id = f"interactive-{uuid.uuid4()}-{int(time.time())}"
         
         while True:
             try:
@@ -173,7 +173,7 @@ Commands:
         print("🧪 Running Test Scenarios")
         print("=" * 30)
         
-        session_id = f"test-{int(time.time())}"
+        session_id = f"test-{uuid.uuid4()}-{int(time.time())}"
         results = []
         
         for i, scenario in enumerate(test_scenarios, 1):
