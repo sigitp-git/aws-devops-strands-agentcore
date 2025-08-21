@@ -5,10 +5,16 @@ Script to invoke the deployed DevOps Agent in Amazon Bedrock AgentCore Runtime.
 
 import boto3
 import json
+import os
 import time
 import uuid
 from datetime import datetime
 from utils import get_ssm_parameter
+
+# Set default AWS region if not already configured
+# The DevOps Agent is deployed in us-east-1 region
+if not os.environ.get('AWS_DEFAULT_REGION'):
+    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
 
 class AgentRuntimeInvoker:
     """Invoke the deployed agent runtime."""
