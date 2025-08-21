@@ -12,6 +12,9 @@ import os
 import logging
 from typing import List, Dict, Any, Tuple, NamedTuple
 from bedrock_agentcore.memory import MemoryClient
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import get_ssm_parameter
 
 class TestResult(NamedTuple):

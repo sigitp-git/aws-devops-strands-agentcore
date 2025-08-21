@@ -44,22 +44,22 @@ export AWS_DEFAULT_REGION=us-east-1
 ### Testing and Debugging
 ```bash
 # Check AWS permissions
-python3 check_permissions.py
+python3 tests/check_permissions.py
 
 # Test memory functionality
-python3 test_memory_save.py
+python3 tests/test_memory_save.py
 
 # Debug memory issues
-python3 debug_memory.py
+python3 tests/debug_memory.py
 
 # Run the agent
 python3 agent.py
 
 # Deploy Lambda function
-cd lambda/ && ./deploy_lambda.sh
+cd lambda/websearch/ && ./deploy_lambda.sh
 
 # Test Lambda locally
-cd lambda/ && python3 test_lambda_local.py
+cd lambda/websearch/ && python3 test_lambda_local.py
 ```
 
 ### AWS Configuration

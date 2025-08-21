@@ -1,4 +1,4 @@
-# AWS DevOps Agent - Cognito Authentication Documentation
+# AWS DevOps Agent - Authentication Guide
 
 ## Overview
 
@@ -6,7 +6,7 @@ The AWS DevOps Agent uses Amazon Cognito User Pool for authentication to access 
 
 ## Architecture Diagram
 
-![Cognito Authentication Flow](./generated-diagrams/cognito_auth_flow_diagram.png.png)
+![Cognito Authentication Flow](./diagrams/cognito_auth_flow_diagram.png.png)
 
 ## Authentication Flow
 
@@ -25,7 +25,7 @@ The agent retrieves authentication configuration from AWS Systems Manager (SSM) 
 ```python
 # From agent.py - Configuration retrieval
 scope_string = get_ssm_parameter("/app/devopsagent/agentcore/cognito_auth_scope") or "openid"
-url = get_ssm_parameter("/app/devopsagent/agentcore/cognito_token_url") or "https://REDACTED_COGNITO_ID.auth.us-east-1.amazoncognito.com/oauth2/token"
+url = get_ssm_parameter("/app/devopsagent/agentcore/cognito_token_url") or "https://your-domain.auth.us-east-1.amazoncognito.com/oauth2/token"
 ```
 
 ### 2. Client Secret Retrieval Phase

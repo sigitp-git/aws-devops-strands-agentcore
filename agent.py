@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+Local agent connecting to Amazon Bedrock AgentCore Memory and Gateway
+"""
+
 import logging
 import os
 import uuid

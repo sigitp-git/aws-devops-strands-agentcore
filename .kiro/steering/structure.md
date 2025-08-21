@@ -5,26 +5,36 @@
 ├── agent.py              # Main agent implementation and entry point
 ├── utils.py              # Utility functions for AWS services and config
 ├── requirements.txt      # Python dependencies
-├── README.md            # Project documentation and setup guide
+├── README.md            # Quick start guide (points to docs/)
+├── docs/                   # Documentation directory
 ├── LICENSE              # MIT License file
 ├── .gitignore           # Git exclusions (Python, AWS, IDE files)
-├── notes.md             # Development notes and testing results
-├── model_temperature.md # Documentation on model temperature settings
-├── cognito_authentication_documentation.md # Complete authentication flow documentation
-├── FUNCTIONALITY_STATUS.md # Comprehensive system status report
-├── DOCUMENTATION_STATUS.md # Documentation completeness tracking
-├── check_permissions.py # AWS permission validation tool
-├── test_memory_save.py  # Memory functionality testing
-├── debug_memory.py      # Memory troubleshooting utilities
+│   ├── README.md        # Main project documentation
+│   ├── notes.md         # Development notes and testing results
+│   ├── model_temperature.md # Documentation on model temperature settings
+│   ├── cognito_authentication_documentation.md # Complete authentication flow documentation
+│   ├── FUNCTIONALITY_STATUS.md # Comprehensive system status report
+│   ├── DOCUMENTATION_STATUS.md # Documentation completeness tracking
+│   ├── SYSTEM_OVERVIEW.md # System architecture overview
+│   ├── README_RUNTIME.md # AgentCore Runtime deployment guide
+│   ├── AGENTCORE_RUNTIME_SUMMARY.md # Runtime integration summary
+│   └── RUNTIME_STATUS_FINAL.md # Final runtime status
+├── tests/               # Testing and debugging utilities
+│   ├── check_permissions.py # AWS permission validation tool
+│   ├── test_memory_save.py  # Memory functionality testing
+│   ├── debug_memory.py      # Memory troubleshooting utilities
+│   ├── test_runtime_local.py # Local runtime testing
+│   └── test_simple_runtime.py # Basic runtime testing
 ├── lambda/              # AWS Lambda functions and deployment
-│   ├── lambda_websearch.py      # Web search Lambda function
-│   ├── lambda_requirements.txt  # Lambda dependencies
-│   ├── deploy_lambda.sh         # Lambda deployment script
-│   ├── test_lambda_local.py     # Local Lambda testing
-│   ├── lambda_integration.py    # Agent integration code
-│   ├── lambda_package/          # Lambda deployment package
-│   ├── test_payload.json        # Test payloads
-│   └── response.json            # Test responses
+│   └── websearch/           # Web search Lambda function
+│       ├── lambda_websearch.py      # Web search Lambda function
+│       ├── lambda_requirements.txt  # Lambda dependencies
+│       ├── deploy_lambda.sh         # Lambda deployment script
+│       ├── test_lambda_local.py     # Local Lambda testing
+│       ├── lambda_integration.py    # Agent integration code
+│       ├── lambda_package/          # Lambda deployment package (created during deployment)
+│       ├── test_payload.json        # Test payloads
+│       └── response.json            # Test responses (created during testing)
 └── .kiro/               # Kiro IDE configuration and steering rules
     ├── hooks/           # Agent hooks for automated tasks
     └── steering/        # AI assistant guidance documents
@@ -51,94 +61,113 @@
 
 ## Documentation Files
 
-### README.md
-- Comprehensive project documentation
-- Installation and setup instructions
-- Usage examples and troubleshooting
-- Architecture overview and features
+## Documentation Directory (`docs/`)
 
-### LICENSE
-- MIT License for open source distribution
-- Copyright and usage permissions
+### docs/README.md
+- Main project documentation and quick start guide
+- Installation instructions and usage examples
+- Architecture overview and key features
 
-### notes.md
+### docs/DEPLOYMENT.md
+- Complete deployment guide for all modes (local CLI, cloud runtime, Lambda)
+- AgentCore Runtime containerized deployment
+- Lambda web search function deployment
+- Testing strategies and troubleshooting
+
+### docs/AUTHENTICATION.md
+- Complete OAuth2 Client Credentials flow documentation
+- Visual authentication flow diagram with Cognito
+- Parameter exchange details and security considerations
+- Troubleshooting guide and configuration requirements
+
+### docs/DEVELOPMENT.md
+- Development setup and technology stack
+- Testing suite and debugging utilities
+- Memory system implementation and patterns
+- Kiro IDE integration and automation
+- Model temperature configuration and best practices
+- Contributing guidelines and code standards
+
+### docs/STATUS.md
+- Comprehensive system status and functionality reports
+- All test results and performance metrics
+- Production readiness confirmation
+- Current deployment status and success metrics
+
+### docs/notes.md
 - Development notes and testing results
 - Memory functionality verification with real conversation examples
 - Test execution logs and outcomes
 - Cross-session memory persistence demonstrations
 
-### model_temperature.md
-- Temperature configuration documentation
-- Best practices for different use cases
-- Technical accuracy optimization guide
-
-### cognito_authentication_documentation.md
-- Complete OAuth2 Client Credentials flow documentation
-- Visual authentication flow diagram
-- Parameter exchange details and security considerations
-- Troubleshooting guide and configuration requirements
-
-### FUNCTIONALITY_STATUS.md
-- Comprehensive system status report
-- All functionality verification results
-- Performance characteristics and testing results
-
-### DOCUMENTATION_STATUS.md
-- Documentation completeness tracking
-- Update history and recent changes
-- File organization and maintenance status
-
 ## Testing and Debug Files
 
-### check_permissions.py
+## Testing Directory (`tests/`)
+
+### tests/check_permissions.py
 - Comprehensive AWS permission checker
 - Validates credentials, SSM, Bedrock, and AgentCore access
 - Provides detailed error reporting and remediation steps
 
-### test_memory_save.py
+### tests/test_memory_save.py
 - Tests AgentCore Memory functionality
 - Verifies event creation and retrieval
 - Validates memory persistence
 
-### debug_memory.py
+### tests/debug_memory.py
 - Advanced memory troubleshooting
 - Memory resource investigation
 - SSM parameter validation
 - Memory creation capability testing
 
+### tests/test_runtime_local.py
+- Local AgentCore Runtime testing
+- Endpoint validation and performance testing
+- Comprehensive test suite before deployment
+
+### tests/test_simple_runtime.py
+- Basic BedrockAgentCoreApp functionality testing
+- Simple echo server for isolating issues
+- Minimal runtime validation
+- SSM parameter validation
+- Memory creation capability testing
+
 ## Lambda Directory
 
-### lambda_websearch.py
+### lambda/websearch/
+The websearch subdirectory contains all web search Lambda function components:
+
+### lambda/websearch/lambda_websearch.py
 - AWS Lambda function for web search functionality
 - DuckDuckGo search integration with DDGS library
 - Comprehensive error handling and rate limit management
 - Structured JSON response format
 
-### lambda_requirements.txt
+### lambda/websearch/lambda_requirements.txt
 - Lambda-specific Python dependencies
 - DuckDuckGo search library and supporting packages
 - Optimized for AWS Lambda runtime environment
 
-### deploy_lambda.sh
+### lambda/websearch/deploy_lambda.sh
 - Automated Lambda deployment script
 - Package creation and dependency installation
 - IAM role creation and function deployment
 - Automated testing and validation
 
-### test_lambda_local.py
+### lambda/websearch/test_lambda_local.py
 - Local Lambda function testing without AWS deployment
 - Multiple test scenarios including error cases
 - Mock context object for Lambda runtime simulation
 
-### lambda_integration.py
+### lambda/websearch/lambda_integration.py
 - Integration code for connecting Lambda with main agent
 - AWS Lambda invocation utilities
 - Response parsing and error handling
 
-### lambda_package/
-- Deployment package directory
+### lambda/websearch/lambda_package/
+- Deployment package directory (created during deployment)
 - Contains Lambda function code and dependencies
-- Generated during deployment process
+- Automatically cleaned up after deployment
 
 ## Kiro IDE Configuration
 

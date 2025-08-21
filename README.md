@@ -1,496 +1,63 @@
 # AWS DevOps Agent
 
-An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memory. The agent provides expert guidance on AWS infrastructure, operations, and DevOps best practices while maintaining conversation context through persistent memory.
+An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memory.
 
-> 📋 **Quick Start**: For a complete system overview, see [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md)  
-> 🔐 **Authentication**: For detailed authentication flow, see [Cognito Authentication Documentation](cognito_authentication_documentation.md)
+## 📚 Documentation
+
+All project documentation has been organized in the [`docs/`](docs/) directory:
+
+### 📋 **Getting Started**
+- **[Main Documentation](docs/README.md)** - Complete setup and usage guide
+- **[System Overview](docs/SYSTEM_OVERVIEW.md)** - Architecture and system overview
+- **[AgentCore Runtime](docs/README_RUNTIME.md)** - Cloud deployment guide
+
+### 🔐 **Authentication & Security**
+- **[Cognito Authentication](docs/cognito_authentication_documentation.md)** - Complete OAuth2 flow documentation
+
+### 📊 **Status & Configuration**
+- **[Functionality Status](docs/FUNCTIONALITY_STATUS.md)** - System status and verification
+- **[Documentation Status](docs/DOCUMENTATION_STATUS.md)** - Documentation completeness
+- **[Model Temperature](docs/model_temperature.md)** - Model configuration guide
+
+### 🚀 **Runtime & Deployment**
+- **[Runtime Summary](docs/AGENTCORE_RUNTIME_SUMMARY.md)** - AgentCore Runtime integration
+- **[Runtime Status](docs/RUNTIME_STATUS_FINAL.md)** - Final deployment status
+
+### 🔧 **Development**
+- **[Development Notes](docs/notes.md)** - Development history and testing results
+
+## Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Set AWS region
+export AWS_DEFAULT_REGION=us-east-1
+
+# Run the agent locally
+python3 agent.py
+
+# Test AgentCore Runtime
+python3 tests/test_runtime_local.py
+
+# Deploy to AWS
+python3 deploy_runtime.py
+```
 
 ## Features
 
-- **AWS Expertise**: Specialized knowledge of AWS services, infrastructure, and DevOps practices
-- **Advanced Memory System**: Uses Amazon Bedrock AgentCore Memory with semantic search for intelligent context retrieval
-- **Preference Learning**: Gradually adapts to user preferences and maintains conversation continuity across sessions
-- **Web Search**: Real-time web search capability for current information using DuckDuckGo
-- **Conversational AI**: Powered by Claude Sonnet 4 with optimized temperature settings for technical accuracy
-- **Secure Authentication**: OAuth2 Client Credentials flow with Amazon Cognito for secure service access
-- **MCP Gateway Integration**: Bedrock AgentCore Gateway with JWT authentication for advanced tool access
-- **Kiro IDE Integration**: Automated code quality analysis and documentation synchronization through agent hooks
-- **Cross-Session Persistence**: Maintains memory and context across different agent sessions
-- **Lambda Web Search**: Deployable AWS Lambda function for scalable web search functionality
-
-## Prerequisites
-
-- Python 3.8+
-- AWS CLI configured with appropriate credentials
-- Access to Amazon Bedrock and AgentCore Memory services
-- AWS region set to `us-east-1` (default)
-- Required Python packages: `strands-agents`, `boto3`, `bedrock-agentcore`, `ddgs`
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/sigitp-git/aws-devops-strands-agentcore.git
-cd aws-devops-strands-agentcore
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Configure AWS credentials:
-```bash
-aws configure
-# or set environment variables
-export AWS_DEFAULT_REGION=us-east-1
-```
-
-## Usage
-
-### Running the Agent
-
-Start the interactive conversation with the AWS-DevOps-agent:
-```bash
-python3 agent.py
-```
-
-The agent will identify itself as "AWS-DevOps-agent" and provide expert AWS DevOps guidance while maintaining conversation context through its advanced memory system.
-
-### Agent Usage Examples
-
-#### Testing Memory Functionality
-
-The agent's memory system allows it to remember your preferences and past conversations. Here are examples of how to test and use this functionality:
-
-**Example 1: Setting Preferences**
-```bash
-$ python3 agent.py
-
-🚀 AWS-DevOps-agent: Ask me about DevOps on AWS! Type 'exit' to quit.
-
-You > my favorite aws service is amazon bedrock
-AWS-DevOps-agent > That's awesome! Amazon Bedrock is a fantastic choice - it's AWS's fully 
-managed service for building and scaling generative AI applications with foundation models 
-from leading AI companies like Anthropic, AI21 Labs, Amazon, Cohere, Meta, and Stability AI.
-
-[Agent provides detailed information about Bedrock capabilities]
-
-You > exit
-```
-
-**Example 2: Memory Recall (New Session)**
-```bash
-$ python3 agent.py
-
-🚀 AWS-DevOps-agent: Ask me about DevOps on AWS! Type 'exit' to quit.
-
-You > what is my favorite aws service?
-AWS-DevOps-agent > Based on the context provided, your favorite AWS service is Amazon Bedrock!
-
-Amazon Bedrock is AWS's fully managed service that makes it easy to build and scale 
-generative AI applications using foundation models from leading AI companies...
-
-[Agent recalls your preference and provides contextual information]
-
-You > exit
-```
-
-**Example 3: Contextual Conversations**
-```bash
-$ python3 agent.py
-
-You > help me with terraform and my favorite service
-AWS-DevOps-agent > I'd be happy to help you integrate Terraform with Amazon Bedrock! 
-Since Bedrock is your favorite service, here are some ways to manage Bedrock resources 
-with Infrastructure as Code...
-
-[Agent combines Terraform knowledge with your Bedrock preference]
-```
-
-#### Memory Testing Commands
-
-**Verify memory functionality:**
-```bash
-# Test memory save and retrieval
-python3 test_memory_save.py
-
-# Expected output:
-# 🔍 Testing Memory Save Functionality
-# ✅ Found memory ID: DevOpsAgentMemory-[ID]
-# ✅ Successfully created test event in memory
-# ✅ Retrieved 1 memories
-#   Memory 1: The user's favorite AWS service is Amazon Bedrock...
-# 🎉 Memory save functionality is working correctly!
-```
-
-**Debug memory issues:**
-```bash
-# Comprehensive memory debugging
-python3 debug_memory.py
-
-# Check memory content directly
-python3 -c "
-from bedrock_agentcore.memory import MemoryClient
-from utils import get_ssm_parameter
-import os
-
-os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-memory_client = MemoryClient(region_name='us-east-1')
-memory_id = get_ssm_parameter('/app/devopsagent/agentcore/memory_id')
-
-memories = memory_client.retrieve_memories(
-    memory_id=memory_id,
-    namespace='agent/devops/devops_001/semantic',
-    query='favorite AWS service',
-    top_k=5
-)
-
-print(f'Found {len(memories)} memories:')
-for i, memory in enumerate(memories):
-    content = memory.get('content', {}).get('text', '')[:100]
-    print(f'  {i+1}. {content}...')
-"
-```
-
-### Testing and Debugging
-
-**Check AWS permissions and service access:**
-```bash
-python3 check_permissions.py
-```
-Validates AWS credentials, SSM, Bedrock, and AgentCore Memory permissions.
-
-**Test memory functionality:**
-```bash
-python3 test_memory_save.py
-```
-Verifies memory creation, event saving, and retrieval capabilities.
-
-**Debug memory issues:**
-```bash
-python3 debug_memory.py
-```
-Advanced troubleshooting for memory resource problems and SSM parameter validation.
-
-### Lambda Web Search Function
-
-The project includes a deployable AWS Lambda function for web search capabilities:
-
-**Deploy the Lambda function:**
-```bash
-cd lambda/
-chmod +x deploy_lambda.sh
-./deploy_lambda.sh
-```
-
-**Test the Lambda function locally:**
-```bash
-cd lambda/
-python3 test_lambda_local.py
-```
-
-**Test the deployed Lambda function:**
-```bash
-cd lambda/
-aws lambda invoke --function-name devops-agent-websearch \
-  --payload '{"keywords": "terraform aws provider", "max_results": 3}' \
-  response.json
-```
-
-**Lambda Function Features:**
-- **Function Name**: `devops-agent-websearch`
-- **Runtime**: Python 3.11 with 256MB memory
-- **Web Search**: DuckDuckGo integration with rate limit handling
-- **Error Handling**: Comprehensive validation and error responses
-- **CloudWatch Logging**: Full logging for debugging and monitoring
-
-## Configuration
-
-### Core Settings
-- **Model**: `us.anthropic.claude-sonnet-4-20250514-v1:0`
-- **Temperature**: 0.3 (optimized for technical accuracy and consistent responses)
-- **Memory Expiry**: 90 days
-- **Region**: us-east-1
-- **Actor ID**: `devops_001` (used for memory namespace organization)
-
-### Memory Management
-Memory ID is automatically stored in SSM Parameter Store at:
-```
-/app/devopsagent/agentcore/memory_id
-```
-
-### Authentication Configuration
-The agent uses Amazon Cognito for secure authentication with the following SSM parameters:
-```
-/app/devopsagent/agentcore/machine_client_id     # Cognito App Client ID
-/app/devopsagent/agentcore/userpool_id           # Cognito User Pool ID
-/app/devopsagent/agentcore/cognito_token_url     # OAuth2 Token Endpoint
-/app/devopsagent/agentcore/cognito_auth_scope    # OAuth2 Scope (default: "openid")
-/app/devopsagent/agentcore/cognito_discovery_url # OIDC Discovery URL
-/app/devopsagent/agentcore/gateway_id            # Bedrock AgentCore Gateway ID
-/app/devopsagent/agentcore/gateway_iam_role      # Gateway IAM Role ARN
-```
-
-For detailed authentication flow documentation, see [Cognito Authentication Documentation](cognito_authentication_documentation.md).
-
-## Architecture
-
-### Core Components
-
-- **agent.py**: Main application entry point with agent configuration
-- **utils.py**: AWS service utilities and configuration helpers
-- **Memory Hooks**: DevOpsAgentMemoryHooks for conversation persistence
-- **Web Search**: DuckDuckGo integration for real-time information
-
-### AWS Services Used
-
-- **Amazon Bedrock**: LLM inference and model hosting
-- **Amazon Bedrock AgentCore Memory**: Conversation persistence and semantic search
-- **Amazon Bedrock AgentCore Gateway**: MCP tool integration with secure authentication
-- **Amazon Cognito**: User Pool for OAuth2 authentication and JWT token management
-- **SSM Parameter Store**: Configuration storage and authentication parameters
-- **STS**: Identity and credential management
-- **AWS Lambda**: Web search function deployment and execution
-- **IAM**: Lambda execution roles and gateway permissions
-- **CloudWatch**: Lambda function logging and monitoring
-
-## Target Users
-
-DevOps engineers, cloud architects, and AWS practitioners seeking intelligent assistance with:
-- AWS infrastructure management
-- DevOps workflow optimization
-- Troubleshooting AWS services
-- Best practices guidance
-- Technical decision support
-
-## Error Handling
-
-The agent includes comprehensive error handling with:
-- Graceful degradation when memory service is unavailable
-- Detailed logging and debugging support
-- User-friendly error messages
-- Automatic fallback mechanisms
-
-## Development
-
-### Project Structure
-```
-├── agent.py              # Main agent implementation and entry point
-├── utils.py              # Utility functions for AWS services and config
-├── requirements.txt      # Python dependencies
-├── README.md            # Project documentation and setup guide
-├── LICENSE              # MIT License file
-├── .gitignore           # Git exclusions (Python, AWS, IDE files)
-├── notes.md             # Development notes and testing results
-├── model_temperature.md # Documentation on model temperature settings
-├── check_permissions.py # AWS permission validation tool
-├── test_memory_save.py  # Memory functionality testing
-├── debug_memory.py      # Memory troubleshooting utilities
-├── lambda/              # AWS Lambda functions and deployment
-│   ├── lambda_websearch.py      # Web search Lambda function
-│   ├── lambda_requirements.txt  # Lambda dependencies
-│   ├── deploy_lambda.sh         # Lambda deployment script
-│   ├── test_lambda_local.py     # Local Lambda testing
-│   ├── lambda_integration.py    # Agent integration code
-│   ├── lambda_package/          # Lambda deployment package
-│   ├── test_payload.json        # Test payloads
-│   └── response.json            # Test responses
-└── .kiro/               # Kiro IDE configuration and steering rules
-    ├── hooks/           # Agent hooks for automated tasks
-    └── steering/        # AI assistant guidance documents
-```
-
-### Kiro IDE Integration
-
-#### Agent Hooks
-- **Code Quality Analyzer**: Monitors source code files for changes and provides improvement suggestions
-- **Documentation Sync**: Keeps documentation up to date with code changes
-- **File Patterns**: Supports Python, JavaScript, TypeScript, Java, C++, and more
-- **Debounce**: Short delay to batch rapid file changes
-
-#### Steering Rules
-- **Product Guidelines**: Core features and capabilities documentation
-- **Structure Guidelines**: Project organization and file structure
-- **Technology Guidelines**: Stack details and configuration
-
-### Additional Documentation
-- **notes.md**: Development notes, testing results, and real conversation examples demonstrating memory functionality
-- **model_temperature.md**: Documentation on model temperature settings and optimization
-- **.kiro/steering/**: AI assistant guidance documents for project context
-
-### Memory Patterns
-- **Enhanced Namespace Structure**: 
-  - `agent/devops/{actorId}/preferences` - User preferences and behavioral patterns
-  - `agent/devops/{actorId}/semantic` - Conversation facts and contextual information
-- **Event-driven Memory Updates**: Automatic saving after each interaction with "ASSISTANT" role for memory compatibility
-- **Semantic Context Retrieval**: Advanced semantic search retrieves relevant memories before query processing
-- **Cross-Session Continuity**: Memory persists across different agent sessions for seamless user experience
-- **Automatic Interaction Persistence**: All conversations stored for 90 days with intelligent preference weighting
-
-### Memory System Testing
-
-The agent's memory system can be tested and verified through several methods:
-
-#### Automated Testing
-```bash
-# Run the comprehensive memory test suite
-python3 test_memory_save.py
-
-# Check AWS permissions for memory services
-python3 check_permissions.py
-
-# Debug memory resource issues
-python3 debug_memory.py
-```
-
-#### Manual Memory Testing Workflow
-1. **Set a Preference**: Tell the agent your favorite AWS service
-2. **Exit and Restart**: Close the agent and start a new session  
-3. **Test Recall**: Ask the agent about your preference
-4. **Verify Context**: Check if the agent uses your preference in responses
-
-#### Memory Verification Commands
-```bash
-# Check memory content directly
-python3 -c "
-import os
-from bedrock_agentcore.memory import MemoryClient
-from utils import get_ssm_parameter
-
-os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-memory_client = MemoryClient(region_name='us-east-1')
-memory_id = get_ssm_parameter('/app/devopsagent/agentcore/memory_id')
-
-# Check both memory namespaces
-namespaces = [
-    'agent/devops/devops_001/semantic',
-    'agent/devops/devops_001/preferences'
-]
-
-for namespace in namespaces:
-    memories = memory_client.retrieve_memories(
-        memory_id=memory_id,
-        namespace=namespace,
-        query='favorite AWS service',
-        top_k=3
-    )
-    print(f'{namespace}: {len(memories)} memories')
-    for i, memory in enumerate(memories):
-        content = memory.get('content', {}).get('text', '')[:100]
-        print(f'  {i+1}. {content}...')
-"
-
-# Test specific queries that have been verified to work
-python3 -c "
-import os
-from bedrock_agentcore.memory import MemoryClient
-from utils import get_ssm_parameter
-
-os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-memory_client = MemoryClient(region_name='us-east-1')
-memory_id = get_ssm_parameter('/app/devopsagent/agentcore/memory_id')
-
-# Test verified queries with 100% success rate
-test_queries = ['Bedrock', 'Nova', 'favorite', 'AWS']
-for query in test_queries:
-    memories = memory_client.retrieve_memories(
-        memory_id=memory_id,
-        namespace='agent/devops/devops_001/semantic',
-        query=query,
-        top_k=1
-    )
-    print(f'Query \"{query}\": {len(memories)} memories found')
-"
-```
-
-### Role Handling
-**Important Technical Detail**: The agent maintains dual role handling:
-- **Internal Role**: Uses "agent" role for conversation flow and user interaction
-- **Memory Role**: Saves interactions with "ASSISTANT" role to comply with AgentCore Memory requirements
-- **Supported Memory Roles**: AgentCore Memory only accepts "USER", "ASSISTANT", "TOOL", "OTHER"
-- **Seamless Experience**: This dual handling is transparent to users while ensuring memory compatibility
-
-## Key Features in Detail
-
-### Intelligent Memory System
-- **Advanced Semantic Memory**: Uses semantic search for intelligent context retrieval from conversation history
-- **Automatic Context Retrieval**: Relevant past conversations are retrieved before processing new queries
-- **Dual Strategy Storage**: Separate namespaces for user preferences and semantic conversation facts
-- **Preference Learning**: Gradually learns and adapts to user preferences through repeated interactions
-- **Cross-Session Persistence**: Memory maintained across different agent sessions with consistent role handling
-- **Role Consistency**: All interactions saved with "ASSISTANT" role for AgentCore Memory compatibility
-- **Graceful Degradation**: Agent continues to function even if memory service is unavailable
-- **Session Management**: Each conversation session is tracked with unique identifiers
-
-#### Memory Behavior and Testing Results
-The AgentCore Memory system has been comprehensively tested with the following verified results:
-- **Memory Content Analysis**: Preferences stored in both semantic and preferences namespaces
-- **Query Success Rate**: 100% success rate for test queries: "Bedrock", "Nova", "favorite", "AWS"
-- **Cross-Session Persistence**: Memory correctly retrieves preferences across different agent sessions
-- **Contextual Integration**: Agent provides contextually relevant responses based on stored preferences
-- **Memory Retrieval Consistency**: Consistently finds stored memories across all relevant queries
-
-**Testing Verified**: The memory system successfully establishes, stores, and recalls user preferences with perfect reliability. Amazon Bedrock preference testing shows complete functionality across all memory operations.
-
-### Web Search Integration
-- **Real-time Information**: DuckDuckGo search for current AWS updates and information
-- **Rate Limit Handling**: Automatic handling of search API rate limits
-- **Fallback Mechanisms**: Graceful error handling for search failures
-
-### AWS Service Integration
-- **SSM Parameter Store**: Persistent storage for memory IDs and configuration
-- **Multi-service Support**: Bedrock, AgentCore Memory, STS integration
-- **Region Awareness**: Automatic region detection and configuration
-
-### Development Automation
-- **Automated Code Quality Analysis**: Kiro IDE hooks monitor file changes and provide improvement suggestions
-- **Documentation Synchronization**: Automatic updates to keep documentation aligned with code changes
-- **Multi-language Support**: Code analysis supports Python, JavaScript, TypeScript, Java, C++, and more
-- **Intelligent Debouncing**: Batches rapid file changes to avoid excessive processing
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Permission Errors**: Run `python3 check_permissions.py` to validate AWS access
-2. **Memory Issues**: Use `python3 debug_memory.py` for detailed diagnostics
-3. **Region Mismatch**: Ensure AWS_DEFAULT_REGION is set to `us-east-1`
-4. **Memory Creation**: If memory doesn't exist, the agent will automatically create it on first run
-
-### Logs and Debugging
-
-The application provides detailed logging for troubleshooting. Check console output for error messages and debugging information. Memory operations are logged at INFO level for monitoring.
+- ✅ **AWS Expertise** - Comprehensive AWS DevOps guidance
+- ✅ **AgentCore Memory** - Persistent conversation context
+- ✅ **MCP Gateway Integration** - Advanced tool access
+- ✅ **Web Search** - Real-time information retrieval
+- ✅ **AgentCore Runtime** - Scalable cloud deployment
+- ✅ **Dual Deployment** - Local CLI and cloud HTTP API
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
-## Contributing
+---
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-### Development Setup
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests: `python3 check_permissions.py && python3 test_memory_save.py`
-5. Commit your changes (`git commit -m 'Add some amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-### Latest Status (August 20, 2025)
-✅ **ALL FUNCTIONALITIES WORKING**: Complete system verification completed - all core systems operational
-✅ **AWS Integration**: Current AWS account, us-east-1 region, all permissions verified, 25 Claude models available
-✅ **Memory System**: DevOpsAgentMemory-xiyfGc4tS2 active, SSM integration working, cross-session persistence verified
-✅ **Agent Framework**: Strands Agents v1.4.0, Claude Sonnet 4 model, temperature 0.3 optimized for technical accuracy
-✅ **Web Search**: DuckDuckGo integration fully functional with rate limiting and error handling
-✅ **Cognito Authentication**: Complete OAuth2 Client Credentials flow with JWT token authentication
-✅ **MCP Gateway Integration**: Bedrock AgentCore Gateway with secure authentication and tool access
-✅ **Performance**: 2-3s startup, 1-5s response time, <1s memory retrieval, graceful error recovery
-✅ **Security**: IAM roles, encrypted SSM parameters, comprehensive error handling, AWS best practices
-✅ **Kiro IDE Integration**: Active agent hooks for code quality analysis and documentation sync
-✅ **Testing Suite**: All permission tests passed, memory tests successful, agent response tests verified
-✅ **Documentation**: Complete authentication flow documentation with diagrams and troubleshooting
-✅ **Production Ready**: Complete documentation, comprehensive testing, ready for production use and development
+**For complete documentation, visit the [`docs/`](docs/) directory.**

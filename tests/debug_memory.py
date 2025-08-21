@@ -5,6 +5,9 @@ Debug script to investigate AgentCore Memory issues
 import os
 import boto3
 from bedrock_agentcore.memory import MemoryClient
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import get_ssm_parameter, put_ssm_parameter
 
 # Set region
