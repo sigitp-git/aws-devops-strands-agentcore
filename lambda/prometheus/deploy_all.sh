@@ -15,6 +15,7 @@ chmod +x deploy_range_query.sh
 chmod +x deploy_list_metrics.sh
 chmod +x deploy_server_info.sh
 chmod +x deploy_find_workspace.sh
+chmod +x deploy_integration.sh
 
 # Deploy each function
 echo "1. Deploying Query Function..."
@@ -37,6 +38,10 @@ echo "5. Deploying Find Workspace Function..."
 ./deploy_find_workspace.sh
 
 echo ""
+echo "6. Deploying Integration Layer Function..."
+./deploy_integration.sh
+
+echo ""
 echo "=========================================="
 echo "All Prometheus Lambda Functions Deployed!"
 echo "=========================================="
@@ -47,6 +52,7 @@ echo "- aws-devops-prometheus-range-query"
 echo "- aws-devops-prometheus-list-metrics"
 echo "- aws-devops-prometheus-server-info"
 echo "- aws-devops-prometheus-find-workspace"
+echo "- aws-devops-prometheus-integration"
 echo ""
 echo "Each function follows Lambda best practices:"
 echo "✓ Single responsibility principle"

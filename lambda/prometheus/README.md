@@ -11,6 +11,8 @@ This implementation breaks down Prometheus operations into separate Lambda funct
 - **`lambda_list_metrics.py`**: Metric discovery and listing
 - **`lambda_server_info.py`**: Server configuration and build information
 - **`lambda_find_workspace.py`**: Find workspace endpoint URLs by alias or ID
+- **`lambda_integration.py`**: Unified interface and routing layer for all operations
+- **`lambda_monitor.py`**: Performance monitoring and health analysis
 - **`prometheus_utils.py`**: Shared utilities for all functions
 
 ## Benefits of This Architecture
@@ -39,12 +41,13 @@ cd lambda/prometheus
 ./deploy_all.sh
 ```
 
-This will deploy all five specialized functions:
+This will deploy all six specialized functions:
 - `aws-devops-prometheus-query`
 - `aws-devops-prometheus-range-query` 
 - `aws-devops-prometheus-list-metrics`
 - `aws-devops-prometheus-server-info`
 - `aws-devops-prometheus-find-workspace`
+- `aws-devops-prometheus-integration`
 
 ### 2. Deploy Individual Functions (Optional)
 
