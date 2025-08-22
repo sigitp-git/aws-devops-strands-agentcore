@@ -10,6 +10,7 @@ This implementation breaks down Prometheus operations into separate Lambda funct
 - **`lambda_range_query.py`**: Range queries over time periods  
 - **`lambda_list_metrics.py`**: Metric discovery and listing
 - **`lambda_server_info.py`**: Server configuration and build information
+- **`lambda_find_workspace.py`**: Find workspace endpoint URLs by alias or ID
 - **`prometheus_utils.py`**: Shared utilities for all functions
 
 ## Benefits of This Architecture
@@ -38,11 +39,12 @@ cd lambda/prometheus
 ./deploy_all.sh
 ```
 
-This will deploy all four specialized functions:
+This will deploy all five specialized functions:
 - `aws-devops-prometheus-query`
 - `aws-devops-prometheus-range-query` 
 - `aws-devops-prometheus-list-metrics`
 - `aws-devops-prometheus-server-info`
+- `aws-devops-prometheus-find-workspace`
 
 ### 2. Deploy Individual Functions (Optional)
 
@@ -52,6 +54,7 @@ This will deploy all four specialized functions:
 ./deploy_range_query.sh     # Range queries
 ./deploy_list_metrics.sh    # Metric discovery
 ./deploy_server_info.sh     # Server information
+./deploy_find_workspace.sh  # Workspace discovery
 ```
 
 ### 3. Test Locally
@@ -164,6 +167,58 @@ Get server configuration and build information.
 ```json
 {
   "workspace_url": "https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-12345"
+}
+```
+
+### 5. Find Workspace Function (`aws-devops-prometheus-find-workspace`)
+
+Find Prometheus workspace endpoint URLs by alias or workspace ID.
+
+**Function**: `lambda_find_workspace.py`  
+**Memory**: 256 MB  
+**Timeout**: 30 seconds  
+
+**Parameters:**
+- `alias` (optional): Workspace alias/name to search for
+- `workspace_id` (optional): Specific workspace ID to find
+- `list_all` (optional): Set to `true` to list all workspaces
+- `region` (optional): AWS region (defaults to current region)
+
+**Examples:**
+```json
+// Find by alias
+{
+  "alias": "production-metrics",
+  "region": "us-east-1"
+}
+
+// Find by workspace ID
+{
+  "workspace_id": "ws-12345678-abcd-1234-efgh-123456789012",
+  "region": "us-east-1"
+}
+
+// List all workspaces
+{
+  "list_all": true,
+  "region": "us-east-1"
+}
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "workspace": {
+    "workspaceId": "ws-12345678-abcd-1234-efgh-123456789012",
+    "alias": "production-metrics",
+    "arn": "arn:aws:aps:us-east-1:123456789012:workspace/ws-12345678-abcd-1234-efgh-123456789012",
+    "status": "ACTIVE",
+    "prometheusEndpoint": "https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-12345678-abcd-1234-efgh-123456789012",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "tags": {}
+  },
+  "message": "Found workspace by alias: production-metrics"
 }
 ```
 

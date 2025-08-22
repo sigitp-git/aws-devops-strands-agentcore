@@ -18,6 +18,7 @@ try:
     from lambda_range_query import lambda_handler as range_query_handler
     from lambda_list_metrics import lambda_handler as list_metrics_handler
     from lambda_server_info import lambda_handler as server_info_handler
+    from lambda_find_workspace import lambda_handler as find_workspace_handler
 except ImportError as e:
     print(f"Error importing lambda functions: {e}")
     print("Make sure you're running this from the lambda/prometheus directory")
@@ -109,6 +110,18 @@ def test_individual_functions():
             "invalid_events": [
                 {"region": "us-east-1"},  # Missing workspace_url
                 {}  # Missing workspace_url
+            ]
+        },
+        {
+            "name": "Find Workspace Function",
+            "handler": find_workspace_handler,
+            "valid_event": {
+                "list_all": True,
+                "region": "us-east-1"
+            },
+            "invalid_events": [
+                {},  # Missing all parameters
+                {"region": "us-east-1"}  # Missing search criteria
             ]
         }
     ]
