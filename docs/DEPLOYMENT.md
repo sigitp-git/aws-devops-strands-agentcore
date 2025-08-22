@@ -378,9 +378,11 @@ aws logs tail /aws/bedrock-agentcore/your-agent-name --follow
 - ✅ **Error Handling** - Comprehensive validation and recovery
 - ✅ **Performance** - Optimized for cloud deployment
 #
-# Lambda Web Search Function
+# Lambda Functions
 
-The project includes a deployable AWS Lambda function for web search capabilities:
+The project includes deployable AWS Lambda functions following microservices architecture and best practices:
+
+## Web Search Function
 
 ### Lambda Function Features
 - **Function Name**: `devops-agent-websearch`
@@ -389,7 +391,7 @@ The project includes a deployable AWS Lambda function for web search capabilitie
 - **Error Handling**: Comprehensive validation and error responses
 - **CloudWatch Logging**: Full logging for debugging and monitoring
 
-### Deploy the Lambda Function
+### Deploy the Web Search Function
 
 ```bash
 cd lambda/websearch/
@@ -397,7 +399,7 @@ chmod +x deploy_lambda.sh
 ./deploy_lambda.sh
 ```
 
-### Test the Lambda Function
+### Test the Web Search Function
 
 **Test locally:**
 ```bash
@@ -413,13 +415,75 @@ aws lambda invoke --function-name devops-agent-websearch \
   response.json
 ```
 
+## Prometheus Monitoring Functions
+
+The project demonstrates Lambda best practices with specialized Prometheus monitoring functions:
+
+### Microservices Architecture
+- **aws-devops-prometheus-query**: Instant PromQL queries (256MB, 30s)
+- **aws-devops-prometheus-range-query**: Range queries over time (512MB, 60s)
+- **aws-devops-prometheus-list-metrics**: Metric discovery (256MB, 30s)
+- **aws-devops-prometheus-server-info**: Server configuration (256MB, 30s)
+
+### Deploy All Prometheus Functions
+
+```bash
+cd lambda/prometheus/
+chmod +x deploy_all.sh
+./deploy_all.sh
+```
+
+### Deploy Individual Prometheus Functions
+
+```bash
+cd lambda/prometheus/
+# Deploy specific functions
+./deploy_query.sh           # Instant queries
+./deploy_range_query.sh     # Range queries
+./deploy_list_metrics.sh    # Metric discovery
+./deploy_server_info.sh     # Server information
+```
+
+### Test Prometheus Functions
+
+**Test locally:**
+```bash
+cd lambda/prometheus/
+python3 test_individual_functions.py
+```
+
+**Test deployed functions:**
+```bash
+cd lambda/prometheus/
+# Test server info function
+aws lambda invoke --function-name aws-devops-prometheus-server-info \
+  --payload '{"workspace_url":"https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-12345678-abcd-1234-efgh-123456789012"}' \
+  response.json
+
+# Test query function
+aws lambda invoke --function-name aws-devops-prometheus-query \
+  --payload '{"workspace_url":"https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-12345678-abcd-1234-efgh-123456789012","query":"up"}' \
+  response.json
+```
+
+### Lambda Best Practices Demonstrated
+
+The Prometheus functions showcase Lambda best practices:
+- **Single Responsibility**: Each function handles one specific operation
+- **Right-sized Resources**: Memory and timeout optimized per function type
+- **Shared Utilities**: Common code in `prometheus_utils.py` eliminates duplication
+- **Independent Scaling**: Functions scale based on individual usage patterns
+- **Granular Monitoring**: Separate CloudWatch metrics per operation
+- **Enhanced Security**: Minimal IAM permissions per function
+
 ### Lambda Integration
 
-The Lambda function provides scalable web search functionality with:
-- **Rate Limit Handling**: Automatic handling of DuckDuckGo rate limits
+The Lambda functions provide scalable functionality with:
+- **Rate Limit Handling**: Automatic handling of service rate limits
 - **Structured Responses**: Consistent JSON format for easy parsing
 - **Error Recovery**: Comprehensive error handling and fallback mechanisms
 - **CloudWatch Integration**: Full logging and monitoring capabilities
+- **Backward Compatibility**: Integration layer maintains existing APIs
 
 ## Project Structure
 
@@ -463,7 +527,7 @@ The Lambda function provides scalable web search functionality with:
 
 1. **Develop locally** with `agent.py`
 2. **Test runtime** with `tests/test_runtime_local.py`
-3. **Deploy Lambda** with `lambda/websearch/deploy_lambda.sh`
+3. **Deploy Lambda functions** with `lambda/websearch/deploy_lambda.sh` and `lambda/prometheus/deploy_all.sh`
 4. **Deploy to AWS** with `deploy_runtime.py`
 5. **Invoke remotely** with `invoke_runtime.py`
 
@@ -480,8 +544,9 @@ python3 tests/test_memory_save.py
 # Test runtime locally
 python3 tests/test_runtime_local.py
 
-# Test Lambda locally
+# Test Lambda functions locally
 cd lambda/websearch/ && python3 test_lambda_local.py
+cd lambda/prometheus/ && python3 test_individual_functions.py
 ```
 
 **Production Testing:**
@@ -489,7 +554,10 @@ cd lambda/websearch/ && python3 test_lambda_local.py
 # Test deployed runtime
 python3 invoke_runtime.py test
 
-# Test deployed Lambda
+# Test deployed Lambda functions
 aws lambda invoke --function-name devops-agent-websearch \
   --payload '{"keywords": "test", "max_results": 1}' response.json
+
+aws lambda invoke --function-name aws-devops-prometheus-server-info \
+  --payload '{"workspace_url":"https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-test"}' response.json
 ```

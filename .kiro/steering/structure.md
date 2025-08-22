@@ -39,15 +39,31 @@
 │   ├── test_runtime_local.py # Local runtime testing
 │   └── test_simple_runtime.py # Basic runtime testing
 ├── lambda/              # AWS Lambda functions and deployment
-│   └── websearch/           # Web search Lambda function
-│       ├── lambda_websearch.py      # Web search Lambda function
+│   ├── websearch/           # Web search Lambda function
+│   │   ├── lambda_websearch.py      # Web search Lambda function
+│   │   ├── lambda_requirements.txt  # Lambda dependencies
+│   │   ├── deploy_lambda.sh         # Lambda deployment script
+│   │   ├── test_lambda_local.py     # Local Lambda testing
+│   │   ├── lambda_integration.py    # Agent integration code
+│   │   ├── lambda_package/          # Lambda deployment package (created during deployment)
+│   │   ├── test_payload.json        # Test payloads
+│   │   └── response.json            # Test responses (created during testing)
+│   └── prometheus/          # Prometheus Lambda functions (microservices architecture)
+│       ├── lambda_query.py          # Instant PromQL queries
+│       ├── lambda_range_query.py    # Range queries over time periods
+│       ├── lambda_list_metrics.py   # Metric discovery and listing
+│       ├── lambda_server_info.py    # Server configuration and build info
+│       ├── prometheus_utils.py      # Shared utilities for all functions
+│       ├── lambda_integration.py    # Integration layer for all functions
 │       ├── lambda_requirements.txt  # Lambda dependencies
-│       ├── deploy_lambda.sh         # Lambda deployment script
-│       ├── test_lambda_local.py     # Local Lambda testing
-│       ├── lambda_integration.py    # Agent integration code
-│       ├── lambda_package/          # Lambda deployment package (created during deployment)
-│       ├── test_payload.json        # Test payloads
-│       └── response.json            # Test responses (created during testing)
+│       ├── deploy_all.sh           # Master deployment script
+│       ├── deploy_query.sh         # Individual function deployments
+│       ├── deploy_range_query.sh   # ...
+│       ├── deploy_list_metrics.sh  # ...
+│       ├── deploy_server_info.sh   # ...
+│       ├── test_individual_functions.py # Testing framework
+│       ├── README.md               # Prometheus functions documentation
+│       └── MIGRATION_SUMMARY.md    # Architecture migration details
 └── .kiro/               # Kiro IDE configuration and steering rules
     ├── hooks/           # Agent hooks for automated tasks
     └── steering/        # AI assistant guidance documents
@@ -181,6 +197,63 @@ The websearch subdirectory contains all web search Lambda function components:
 - Deployment package directory (created during deployment)
 - Contains Lambda function code and dependencies
 - Automatically cleaned up after deployment
+
+### lambda/prometheus/
+The prometheus subdirectory contains specialized Lambda functions following microservices architecture and Lambda best practices:
+
+### lambda/prometheus/lambda_query.py
+- AWS Lambda function for instant PromQL queries
+- Handles single query execution with SigV4 authentication
+- Optimized for fast response times (256MB, 30s timeout)
+- Single responsibility: instant query operations only
+
+### lambda/prometheus/lambda_range_query.py
+- AWS Lambda function for PromQL range queries over time periods
+- Handles time-series data retrieval with configurable step intervals
+- Right-sized resources for data-intensive operations (512MB, 60s timeout)
+- Single responsibility: range query operations only
+
+### lambda/prometheus/lambda_list_metrics.py
+- AWS Lambda function for metric discovery and listing
+- Retrieves all available metric names from Prometheus workspace
+- Lightweight function for metadata operations (256MB, 30s timeout)
+- Single responsibility: metric discovery only
+
+### lambda/prometheus/lambda_server_info.py
+- AWS Lambda function for server configuration and build information
+- Retrieves Prometheus server status and configuration details
+- Optimized for configuration queries (256MB, 30s timeout)
+- Single responsibility: server information only
+
+### lambda/prometheus/prometheus_utils.py
+- Shared utilities module for all Prometheus Lambda functions
+- Common functions for SigV4 authentication and HTTP requests
+- Standardized error handling and response formatting
+- Eliminates code duplication while maintaining function separation
+
+### lambda/prometheus/lambda_integration.py
+- Integration layer that routes requests to appropriate specialized functions
+- Maintains backward compatibility with existing applications
+- Automatic function selection based on operation type
+- Unified interface for all Prometheus operations
+
+### lambda/prometheus/deploy_all.sh
+- Master deployment script for all Prometheus functions
+- Deploys all four specialized functions with proper IAM roles
+- Follows Lambda best practices for deployment automation
+- Comprehensive testing and validation
+
+### lambda/prometheus/deploy_*.sh
+- Individual deployment scripts for each specialized function
+- Independent deployment capability for targeted updates
+- Function-specific IAM roles and permissions
+- Optimized resource allocation per function type
+
+### lambda/prometheus/test_individual_functions.py
+- Comprehensive testing framework for all specialized functions
+- Tests parameter validation, error handling, and response formatting
+- Validates shared utilities and integration layer
+- Demonstrates Lambda best practices compliance
 
 ## Kiro IDE Configuration
 

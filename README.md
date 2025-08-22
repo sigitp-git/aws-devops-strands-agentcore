@@ -96,7 +96,9 @@ python3 tests/test_runtime_local.py
 - **AgentCore Memory**: 90-day persistent memory with semantic search
 - **Cognito Authentication**: OAuth2 JWT tokens for secure access
 - **MCP Gateway**: Advanced tool integration
-- **Lambda Functions**: Scalable web search capability
+- **Lambda Functions**: Scalable microservices architecture
+  - Web search capability with DuckDuckGo integration
+  - Prometheus monitoring with 4 specialized functions following Lambda best practices
 
 ### AWS Services
 Amazon Bedrock • AgentCore Memory • Cognito • SSM Parameter Store • Lambda • IAM • CloudWatch

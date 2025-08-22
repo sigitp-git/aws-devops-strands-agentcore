@@ -9,7 +9,7 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 - **Secure Authentication**: OAuth2 Client Credentials flow with Amazon Cognito for secure service access
 - **MCP Gateway Integration**: Bedrock AgentCore Gateway with JWT authentication for advanced tool access
 - **Web Search**: Real-time web search capability for current information using DuckDuckGo
-- **Lambda Integration**: Deployable AWS Lambda function for scalable web search functionality
+- **Lambda Integration**: Lambda functions will be integrated with Bedrock AgentCore Gateway, they'll be accessible through the MCP (Model Context Protocol) framework, which provides a much cleaner and more scalable integration pattern
 - **Conversational AI**: Powered by Claude Sonnet 4 with optimized temperature settings for technical accuracy
 
 ## Target Users
@@ -28,13 +28,16 @@ DevOps engineers, cloud architects, and AWS practitioners seeking intelligent as
 - Secure authentication with Amazon Cognito and JWT tokens
 - Advanced tool access through MCP gateway integration
 - Provides up-to-date information through web search
-- Scalable Lambda-based web search functionality
+- Scalable Lambda-based microservices architecture
+  - Web search functionality with DuckDuckGo integration
+  - Prometheus monitoring with specialized functions following Lambda best practices
 - Maintains professional, helpful tone
 - Focuses on actionable, practical advice
 - Automated code quality analysis through Kiro IDE hooks
 - Comprehensive testing and debugging utilities
 - Production-ready Lambda deployment with error handling
 - Complete authentication flow documentation with diagrams
+- Demonstrates Lambda best practices with real-world microservices implementation
 
 ## Repository Information
 

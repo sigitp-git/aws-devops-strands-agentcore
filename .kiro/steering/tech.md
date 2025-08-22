@@ -18,9 +18,11 @@
 - **Amazon Cognito**: User Pool for OAuth2 authentication and JWT token management
 - **SSM Parameter Store**: Configuration and authentication parameter storage
 - **STS**: Identity and credential management
-- **AWS Lambda**: Web search function deployment and execution
-- **IAM**: Lambda execution roles and gateway permissions
-- **CloudWatch**: Lambda function logging and monitoring
+- **AWS Lambda**: Microservices architecture with specialized functions
+  - Web search function with DuckDuckGo integration
+  - Prometheus monitoring functions (4 specialized functions following Lambda best practices)
+- **IAM**: Lambda execution roles and gateway permissions with least privilege
+- **CloudWatch**: Lambda function logging and monitoring with granular metrics
 
 ## Configuration
 - **Region**: us-east-1 (default)
@@ -55,11 +57,13 @@ python3 tests/debug_memory.py
 # Run the agent
 python3 agent.py
 
-# Deploy Lambda function
+# Deploy Lambda functions
 cd lambda/websearch/ && ./deploy_lambda.sh
+cd lambda/prometheus/ && ./deploy_all.sh
 
-# Test Lambda locally
+# Test Lambda functions locally
 cd lambda/websearch/ && python3 test_lambda_local.py
+cd lambda/prometheus/ && python3 test_individual_functions.py
 ```
 
 ### AWS Configuration
@@ -91,3 +95,6 @@ aws sts get-caller-identity
 - SSM parameter store used for persistent configuration
 - Automated code quality analysis on file changes
 - MIT License for open source distribution
+- Lambda functions follow microservices architecture and best practices
+- Prometheus functions demonstrate real-world implementation of Lambda best practices
+- Shared utilities pattern eliminates code duplication while maintaining function separation
