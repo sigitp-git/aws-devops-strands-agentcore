@@ -417,13 +417,20 @@ aws lambda invoke --function-name devops-agent-websearch \
 
 ## Prometheus Monitoring Functions
 
-The project demonstrates Lambda best practices with specialized Prometheus monitoring functions:
+The project demonstrates Lambda best practices with specialized Prometheus monitoring functions designed for AgentCore Gateway integration:
 
 ### Microservices Architecture
-- **aws-devops-prometheus-query**: Instant PromQL queries (256MB, 30s)
-- **aws-devops-prometheus-range-query**: Range queries over time (512MB, 60s)
-- **aws-devops-prometheus-list-metrics**: Metric discovery (256MB, 30s)
-- **aws-devops-prometheus-server-info**: Server configuration (256MB, 30s)
+- **prometheus-query**: Instant PromQL queries (256MB, 30s)
+- **prometheus-range-query**: Range queries over time (512MB, 60s)
+- **prometheus-list-metrics**: Metric discovery (256MB, 30s)
+- **prometheus-server-info**: Server configuration (256MB, 30s)
+
+### AgentCore Gateway Integration
+These functions are designed to integrate with **Bedrock AgentCore Gateway** through the **MCP (Model Context Protocol)** framework, providing:
+- **Secure Authentication**: JWT-based authentication via Cognito
+- **Scalable Architecture**: Multiple agents can share the same functions
+- **Centralized Management**: Gateway handles connection pooling and caching
+- **Clean Integration**: MCP provides standardized tool interface
 
 ### Deploy All Prometheus Functions
 
@@ -456,13 +463,13 @@ python3 test_individual_functions.py
 ```bash
 cd lambda/prometheus/
 # Test server info function
-aws lambda invoke --function-name aws-devops-prometheus-server-info \
-  --payload '{"workspace_url":"https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-12345678-abcd-1234-efgh-123456789012"}' \
+aws lambda invoke --function-name prometheus-server-info \
+  --payload '{"body":{"workspace_id":"ws-12345678-abcd-1234-efgh-123456789012","region":"us-east-1"}}' \
   response.json
 
 # Test query function
-aws lambda invoke --function-name aws-devops-prometheus-query \
-  --payload '{"workspace_url":"https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-12345678-abcd-1234-efgh-123456789012","query":"up"}' \
+aws lambda invoke --function-name prometheus-query \
+  --payload '{"body":{"workspace_id":"ws-12345678-abcd-1234-efgh-123456789012","query":"up","region":"us-east-1"}}' \
   response.json
 ```
 
@@ -558,6 +565,6 @@ python3 invoke_runtime.py test
 aws lambda invoke --function-name devops-agent-websearch \
   --payload '{"keywords": "test", "max_results": 1}' response.json
 
-aws lambda invoke --function-name aws-devops-prometheus-server-info \
-  --payload '{"workspace_url":"https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-test"}' response.json
+aws lambda invoke --function-name prometheus-server-info \
+  --payload '{"body":{"workspace_id":"ws-test","region":"us-east-1"}}' response.json
 ```

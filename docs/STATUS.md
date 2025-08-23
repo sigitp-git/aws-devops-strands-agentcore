@@ -1,6 +1,6 @@
 # AWS DevOps Agent - System Status
 
-**Last Updated**: August 21, 2025  
+**Last Updated**: August 23, 2025  
 **Status**: ✅ SUCCESSFULLY DEPLOYED TO PRODUCTION - AGENTCORE RUNTIME OPERATIONAL
 
 ## Executive Summary
@@ -79,12 +79,18 @@ The AWS DevOps Agent is fully operational with complete AWS integration, functio
 - **Container**: ARM64 Docker image optimized for performance
 - **IAM Role**: `AgentRuntimeExecutionRole` with comprehensive permissions
 
-### Lambda Web Search Function
-- **Function Name**: `devops-agent-websearch`
-- **Runtime**: Python 3.11 with 256MB memory
-- **Status**: Deployed and operational
-- **Features**: DuckDuckGo integration, rate limiting, error handling
-- **CloudWatch**: Full logging and monitoring
+### Lambda Functions
+- **Web Search Function**: `devops-agent-websearch` (Python 3.11, 256MB)
+  - Status: Deployed and operational
+  - Features: DuckDuckGo integration, rate limiting, error handling
+- **Prometheus Functions**: Microservices architecture with AgentCore Gateway integration
+  - `prometheus-query`: Instant PromQL queries (256MB, 30s)
+  - `prometheus-range-query`: Range queries over time (512MB, 60s)
+  - `prometheus-list-metrics`: Metric discovery (256MB, 30s)
+  - `prometheus-server-info`: Server configuration (256MB, 30s)
+  - Status: Refactored for AgentCore Gateway MCP integration
+  - Features: Simplified parameter handling, enhanced security validation
+- **CloudWatch**: Full logging and monitoring for all functions
 
 ## ✅ Testing Results
 
@@ -267,6 +273,15 @@ Overall: 4/5 core tests PASSING
 - ✅ **Documentation Sync**: Automatic documentation updates
 
 ## 📈 Recent Achievements
+
+### August 23, 2025 - Prometheus Lambda Functions Refactoring
+- ✅ **AgentCore Gateway Integration**: Refactored Prometheus functions for MCP integration
+- ✅ **Simplified Architecture**: Removed complex workspace discovery, focus on core operations
+- ✅ **Enhanced Parameter Handling**: Direct workspace_id usage instead of discovery logic
+- ✅ **Security Improvements**: Enhanced input validation and dangerous pattern detection
+- ✅ **Documentation Updates**: Updated all docs to reflect new architecture
+- ✅ **Gateway Configuration**: Added gateway_config.json for MCP tool definitions
+- ✅ **Testing Framework**: Streamlined testing approach with parameter validation
 
 ### August 21, 2025 - Production Deployment & Documentation Consolidation
 - ✅ **AgentCore Runtime Deployed**: Successfully deployed to Amazon Bedrock AgentCore Runtime

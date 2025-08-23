@@ -63,7 +63,7 @@ cd lambda/prometheus/ && ./deploy_all.sh
 
 # Test Lambda functions locally
 cd lambda/websearch/ && python3 test_lambda_local.py
-cd lambda/prometheus/ && python3 test_individual_functions.py
+cd lambda/prometheus/ && python3 test_parameter_handling.py
 ```
 
 ### AWS Configuration
@@ -96,5 +96,8 @@ aws sts get-caller-identity
 - Automated code quality analysis on file changes
 - MIT License for open source distribution
 - Lambda functions follow microservices architecture and best practices
-- Prometheus functions demonstrate real-world implementation of Lambda best practices
+- Prometheus functions refactored for AgentCore Gateway MCP integration
+- Simplified parameter handling with direct workspace_id usage
+- Enhanced security validation and dangerous pattern detection
 - Shared utilities pattern eliminates code duplication while maintaining function separation
+- Gateway configuration schema defined for MCP tool integration
