@@ -10,6 +10,7 @@ import time
 import uuid
 from datetime import datetime
 from utils import get_ssm_parameter
+from agent import AgentConfig
 
 # Set default AWS region if not already configured
 # The DevOps Agent is deployed in us-east-1 region
@@ -22,6 +23,13 @@ class AgentRuntimeInvoker:
     def __init__(self, region="us-east-1"):
         self.region = region
         self.client = boto3.client('bedrock-agentcore', region_name=region)
+        
+        # Print current model configuration
+        current_model = AgentConfig.get_model_id()
+        model_name = AgentConfig.list_models().get(AgentConfig.SELECTED_MODEL, "Unknown")
+        print(f"🤖 Current Model: {model_name}")
+        print(f"📝 Model ID: {current_model}")
+        print()
         
     def get_agent_runtime_arn(self):
         """Get the agent runtime ARN from SSM or user input."""

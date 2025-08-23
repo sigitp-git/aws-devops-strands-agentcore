@@ -41,10 +41,12 @@ Once launched, access the web interface at:
 
 - 🎨 Modern web interface with AWS-themed styling
 - 💬 Real-time chat with the DevOps Agent
+- 🤖 Interactive model selector with 5 Claude models
 - 📋 Pre-built example prompts
 - 🔄 Session management controls
 - 📱 Mobile-friendly responsive design
 - ⚡ Direct integration with AgentCore Runtime
+- 🔧 Real-time model switching with visual feedback
 
 ## Documentation
 

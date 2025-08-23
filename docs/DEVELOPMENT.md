@@ -61,11 +61,39 @@ export AWS_DEFAULT_REGION=us-east-1
 ## Configuration
 
 ### Core Settings
-- **Model**: `us.anthropic.claude-sonnet-4-20250514-v1:0`
+- **Models**: Multiple Claude models available with dynamic selection
 - **Temperature**: 0.3 (optimized for technical accuracy and consistent responses)
 - **Memory Expiry**: 90 days
 - **Region**: us-east-1
 - **Actor ID**: `devops_001` (used for memory namespace organization)
+
+### Model Selection System
+
+The agent supports dynamic model selection with 5 Claude models:
+
+#### Available Models
+```python
+AVAILABLE_MODELS = {
+    'claude-sonnet-4': 'us.anthropic.claude-sonnet-4-20250514-v1:0',
+    'claude-3-7-sonnet': 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+    'claude-3-5-sonnet-v2': 'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
+    'claude-3-5-sonnet-v1': 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
+    'claude-3-5-haiku': 'us.anthropic.claude-3-5-haiku-20241022-v1:0'
+}
+```
+
+#### Model Selection Methods
+1. **Standalone Selector**: `python3 select_model.py`
+2. **CLI Integration**: `python3 agent.py --select-model`
+3. **Streamlit UI**: Dropdown selector in web interface
+4. **Programmatic**: `AgentConfig.set_model(model_key)`
+
+#### Model Characteristics
+- **Claude Sonnet 4**: Latest capabilities, best for complex reasoning
+- **Claude 3.7 Sonnet**: Enhanced reasoning, good for infrastructure planning
+- **Claude 3.5 Sonnet v2**: Balanced performance, default choice
+- **Claude 3.5 Sonnet v1**: Stable version, reliable for production
+- **Claude 3.5 Haiku**: Fast responses, efficient for simple queries
 
 ### Model Temperature Configuration
 

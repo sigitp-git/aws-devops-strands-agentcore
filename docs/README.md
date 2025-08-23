@@ -5,6 +5,7 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 ## 📚 Documentation
 
 - **[Quick Setup Guide](SETUP.md)** - 5-minute setup instructions
+- **[Model Selection Guide](MODEL_SELECTION.md)** - Complete guide to choosing and switching Claude models
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment options (local, cloud, Lambda)
 - **[Streamlit Frontend](STREAMLIT_FRONTEND.md)** - Web UI for interactive chat experience
 - **[IAM Policies Guide](../iampolicies/README.md)** - Security policies and role configuration
@@ -19,7 +20,8 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 - **🚀 Production Ready**: Successfully deployed to Amazon Bedrock AgentCore Runtime
 - **🔍 Real-time Search**: DuckDuckGo integration with deployable Lambda function
 - **📊 Prometheus Monitoring**: Specialized Lambda functions with AgentCore Gateway integration following microservices architecture and best practices
-- **⚡ AWS Expertise**: Specialized knowledge powered by Claude Sonnet 4 (temperature 0.3)
+- **🤖 Flexible Model Selection**: Choose from 5 Claude models (Sonnet 4, 3.7 Sonnet, 3.5 Sonnet v2, 3.5 Sonnet v1, 3.5 Haiku)
+- **⚡ AWS Expertise**: Specialized knowledge powered by configurable Claude models (temperature 0.3)
 - **🛠️ MCP Integration**: Advanced tool access through Bedrock AgentCore Gateway
 - **🎯 Kiro IDE Integration**: Automated code quality analysis and documentation sync
 - **📦 ARM64 Optimized**: Docker container built for optimal performance
@@ -53,6 +55,15 @@ aws configure  # Set AWS_DEFAULT_REGION=us-east-1
 # Interactive CLI mode
 python3 agent.py
 
+# Select model interactively
+python3 agent.py --select-model
+
+# Standalone model selector
+python3 select_model.py
+
+# Show help and available models
+python3 agent.py --help
+
 # Test deployed agent
 python3 invoke_runtime.py
 ```
@@ -67,6 +78,49 @@ python3 agent_runtime.py
 ```
 
 > 📖 **For detailed setup, deployment options, and troubleshooting, see the [Deployment Guide](DEPLOYMENT.md)**
+
+## 🤖 Model Selection
+
+Choose from multiple Claude models based on your specific needs:
+
+### Available Models
+- **Claude Sonnet 4** - Latest, most capable model for complex reasoning
+- **Claude 3.7 Sonnet** - Enhanced reasoning capabilities for advanced tasks
+- **Claude 3.5 Sonnet v2** - Balanced performance and speed (default)
+- **Claude 3.5 Sonnet v1** - Stable, proven performance for reliability
+- **Claude 3.5 Haiku** - Fast and efficient for simple tasks
+
+### Model Selection Methods
+
+**Standalone Model Selector:**
+```bash
+python3 select_model.py
+# Interactive menu with current model display
+```
+
+**CLI Agent with Model Selection:**
+```bash
+python3 agent.py --select-model
+# Select model before starting agent
+```
+
+**Streamlit Web Interface:**
+- Use the model selector dropdown in the sidebar
+- Changes take effect immediately in the web interface
+- Visual feedback shows current model and description
+
+**Help and Status:**
+```bash
+python3 agent.py --help
+# Shows usage options and available models
+```
+
+### Model Selection Tips
+- **Claude Sonnet 4**: Best for complex DevOps scenarios and advanced reasoning
+- **Claude 3.7 Sonnet**: Enhanced reasoning for infrastructure planning
+- **Claude 3.5 Sonnet v2**: Balanced choice for most DevOps tasks
+- **Claude 3.5 Sonnet v1**: Reliable for production environments
+- **Claude 3.5 Haiku**: Quick responses for simple queries
 
 ## 💡 Usage Examples
 

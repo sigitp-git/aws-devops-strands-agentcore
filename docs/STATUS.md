@@ -27,11 +27,18 @@ The AWS DevOps Agent is fully operational with complete AWS integration, functio
 - **Query Success Rate**: 100% success for test queries: "Bedrock", "Nova", "favorite", "AWS"
 
 ### AI Model Integration
-- **Model**: Claude Sonnet 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
+- **Model Selection System**: Dynamic model switching with 5 Claude models
+- **Available Models**: 
+  - Claude Sonnet 4 (Latest, most capable)
+  - Claude 3.7 Sonnet (Enhanced reasoning)
+  - Claude 3.5 Sonnet v2 (Balanced performance - default)
+  - Claude 3.5 Sonnet v1 (Stable version)
+  - Claude 3.5 Haiku (Fast and efficient)
 - **Temperature**: 0.3 (optimized for technical accuracy)
 - **Bedrock Runtime**: Accessible and responding correctly
 - **Agent Framework**: Strands Agents v1.4.0 fully operational
 - **Response Quality**: Comprehensive AWS guidance with personalized suggestions
+- **Model Selector**: CLI, Streamlit UI, and standalone selector all operational
 
 ### Authentication System
 - **Provider**: Amazon Cognito User Pool
@@ -91,6 +98,41 @@ The AWS DevOps Agent is fully operational with complete AWS integration, functio
   - Status: Refactored for AgentCore Gateway MCP integration
   - Features: Simplified parameter handling, enhanced security validation
 - **CloudWatch**: Full logging and monitoring for all functions
+
+## ✅ Model Selector System
+
+### Model Selection Features
+- **Standalone Selector**: `python3 select_model.py` - Interactive CLI menu
+- **Agent Integration**: `python3 agent.py --select-model` - Model selection before agent start
+- **Streamlit UI**: Real-time model switching in web interface
+- **Help System**: `python3 agent.py --help` - Shows available models and usage
+
+### Model Selection Testing
+```bash
+# Standalone selector test
+python3 select_model.py
+✅ Interactive menu working
+✅ Model switching confirmed
+✅ Current model display accurate
+
+# CLI integration test  
+python3 agent.py --select-model
+✅ Model selection before agent start
+✅ Selected model used correctly
+
+# Streamlit UI test
+./run_streamlit.sh
+✅ Model dropdown functional
+✅ Real-time model updates working
+✅ Visual feedback operational
+```
+
+### Model Performance Verification
+- **Claude Sonnet 4**: Complex reasoning tasks - ✅ Working
+- **Claude 3.7 Sonnet**: Enhanced reasoning - ✅ Working  
+- **Claude 3.5 Sonnet v2**: Balanced performance - ✅ Working (Default)
+- **Claude 3.5 Sonnet v1**: Stable version - ✅ Working
+- **Claude 3.5 Haiku**: Fast responses - ✅ Working
 
 ## ✅ Testing Results
 

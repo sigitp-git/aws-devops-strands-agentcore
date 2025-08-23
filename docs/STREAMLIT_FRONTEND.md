@@ -88,6 +88,20 @@ Once launched, the application will be available at:
 - **Session ID**: Unique identifier for your current session
 - **Region**: AWS region (us-east-1)
 - **Message Count**: Number of messages in current session
+- **Model**: Currently selected Claude model
+
+#### Model Selection
+- **🤖 Model Selection**: Interactive dropdown to choose Claude models
+- **Real-time Updates**: Model changes take effect immediately
+- **Model Descriptions**: Clear descriptions of each model's capabilities
+- **Current Model Display**: Shows active model with success confirmation
+
+**Available Models:**
+- **Claude Sonnet 4** - Latest, most capable model
+- **Claude 3.7 Sonnet** - Enhanced reasoning capabilities
+- **Claude 3.5 Sonnet v2** - Balanced performance (default)
+- **Claude 3.5 Sonnet v1** - Stable, proven performance
+- **Claude 3.5 Haiku** - Fast and efficient for simple tasks
 
 #### Quick Actions
 - **🔄 New Session**: Start a fresh conversation with the agent

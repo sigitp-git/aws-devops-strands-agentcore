@@ -19,10 +19,38 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 - **🔐 Secure Authentication**: OAuth2 Client Credentials flow with Amazon Cognito and JWT tokens
 - **🚀 Production Ready**: Successfully deployed to Amazon Bedrock AgentCore Runtime
 - **🔍 Real-time Search**: DuckDuckGo integration with deployable Lambda function
-- **⚡ AWS Expertise**: Specialized knowledge powered by Claude Sonnet 4 (temperature 0.3)
+- **🤖 Flexible Model Selection**: Choose from 5 Claude models (Sonnet 4, 3.7 Sonnet, 3.5 Sonnet v2, 3.5 Sonnet v1, 3.5 Haiku)
+- **⚡ AWS Expertise**: Specialized knowledge powered by configurable Claude models (temperature 0.3)
 - **🛠️ MCP Integration**: Advanced tool access through Bedrock AgentCore Gateway
 - **🎯 Kiro IDE Integration**: Automated code quality analysis and documentation sync
 - **📦 ARM64 Optimized**: Docker container built for optimal performance
+
+## 🤖 Model Selection
+
+Choose from multiple Claude models based on your needs:
+
+### Available Models
+- **Claude Sonnet 4** - Latest, most capable model (default)
+- **Claude 3.7 Sonnet** - Enhanced reasoning capabilities  
+- **Claude 3.5 Sonnet v2** - Balanced performance and speed
+- **Claude 3.5 Sonnet v1** - Stable, proven performance
+- **Claude 3.5 Haiku** - Fast and efficient for simple tasks
+
+### Model Selection Options
+
+**Standalone Model Selector:**
+```bash
+python3 select_model.py
+```
+
+**CLI Agent with Model Selection:**
+```bash
+python3 agent.py --select-model
+```
+
+**Streamlit Web UI:**
+- Use the model selector in the sidebar under "🤖 Model Selection"
+- Changes take effect immediately in the web interface
 
 ## 🚀 Quick Start
 

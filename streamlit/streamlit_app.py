@@ -16,6 +16,7 @@ from datetime import datetime
 # Add parent directory to path to import utils
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import get_ssm_parameter
+from agent import AgentConfig
 
 # Set default AWS region if not already configured
 if not os.environ.get('AWS_DEFAULT_REGION'):
@@ -85,6 +86,11 @@ def main():
         initial_sidebar_state="expanded"
     )
     
+    # Display MODEL_ID information
+    current_model_id = AgentConfig.get_model_id()
+    print(f"🌐 Streamlit App - Backend MODEL_ID: {current_model_id}")
+    print(f"📝 Model Description: {AgentConfig.list_models()[AgentConfig.SELECTED_MODEL]}")
+    
     # Custom CSS for better styling
     st.markdown("""
     <style>
@@ -138,6 +144,37 @@ def main():
         st.text(f"Session ID: {st.session_state.session_id[:20]}...")
         st.text(f"Region: us-east-1")
         st.text(f"Messages: {len(st.session_state.messages)}")
+        current_model_id = AgentConfig.get_model_id()
+        st.text(f"Model: {current_model_id.split('.')[-1]}")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Model selector
+        st.markdown('<div class="sidebar-content">', unsafe_allow_html=True)
+        st.subheader("🤖 Model Selection")
+        
+        # Initialize model selection in session state
+        if 'selected_model_key' not in st.session_state:
+            st.session_state.selected_model_key = AgentConfig.SELECTED_MODEL
+        
+        # Model selector dropdown
+        model_options = AgentConfig.list_models()
+        selected_model = st.selectbox(
+            "Choose Claude Model:",
+            options=list(model_options.keys()),
+            index=list(model_options.keys()).index(st.session_state.selected_model_key),
+            format_func=lambda x: model_options[x],
+            key="model_selector"
+        )
+        
+        # Update model if changed
+        if selected_model != st.session_state.selected_model_key:
+            st.session_state.selected_model_key = selected_model
+            AgentConfig.set_model(selected_model)
+            st.success(f"✅ Model updated to: {model_options[selected_model]}")
+            st.rerun()
+        
+        # Display current model info
+        st.info(f"🔧 Current: {model_options[AgentConfig.SELECTED_MODEL]}")
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Quick actions

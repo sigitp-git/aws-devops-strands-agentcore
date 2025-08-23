@@ -42,8 +42,43 @@ class AgentConfig:
     # AWS Settings
     DEFAULT_REGION = 'us-east-1'
     
+    # Available Models
+    AVAILABLE_MODELS = {
+        'claude-sonnet-4': 'us.anthropic.claude-sonnet-4-20250514-v1:0',
+        'claude-3-7-sonnet': 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+        'claude-3-5-sonnet-v2': 'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
+        'claude-3-5-sonnet-v1': 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
+        'claude-3-5-haiku': 'us.anthropic.claude-3-5-haiku-20241022-v1:0'
+    }
+    
+    # Default model selection
+    SELECTED_MODEL = 'claude-3-5-sonnet-v2'
+    
+    @classmethod
+    def get_model_id(cls):
+        """Get the currently selected model ID."""
+        return cls.AVAILABLE_MODELS.get(cls.SELECTED_MODEL, cls.AVAILABLE_MODELS['claude-3-5-sonnet-v2'])
+    
+    @classmethod
+    def set_model(cls, model_key):
+        """Set the model by key."""
+        if model_key in cls.AVAILABLE_MODELS:
+            cls.SELECTED_MODEL = model_key
+            return True
+        return False
+    
+    @classmethod
+    def list_models(cls):
+        """List available models with descriptions."""
+        return {
+            'claude-sonnet-4': 'Claude Sonnet 4 (Latest, Most Capable)',
+            'claude-3-7-sonnet': 'Claude 3.7 Sonnet (Enhanced Reasoning)',
+            'claude-3-5-sonnet-v2': 'Claude 3.5 Sonnet v2 (Balanced Performance)',
+            'claude-3-5-sonnet-v1': 'Claude 3.5 Sonnet v1 (Stable)',
+            'claude-3-5-haiku': 'Claude 3.5 Haiku (Fast & Efficient)'
+        }
+    
     # Model Settings
-    MODEL_ID = 'us.anthropic.claude-sonnet-4-20250514-v1:0'
     MODEL_TEMPERATURE = 0.3
     
     # Memory Settings
@@ -61,6 +96,55 @@ class AgentConfig:
         """Setup AWS region configuration."""
         os.environ['AWS_DEFAULT_REGION'] = cls.DEFAULT_REGION
         return Session().region_name
+
+def select_model_interactive():
+    """Interactive model selection for CLI usage."""
+    print("\n🤖 Available Claude Models:")
+    print("=" * 50)
+    
+    models = AgentConfig.list_models()
+    model_keys = list(models.keys())
+    
+    for i, (key, description) in enumerate(models.items(), 1):
+        current = " (CURRENT)" if key == AgentConfig.SELECTED_MODEL else ""
+        print(f"{i}. {description}{current}")
+    
+    print(f"\n0. Use current selection: {models[AgentConfig.SELECTED_MODEL]}")
+    
+    try:
+        choice = input("\nSelect model (0-5): ").strip()
+        
+        if choice == '0' or choice == '':
+            print(f"✅ Using current model: {models[AgentConfig.SELECTED_MODEL]}")
+            return
+        
+        choice_idx = int(choice) - 1
+        if 0 <= choice_idx < len(model_keys):
+            selected_key = model_keys[choice_idx]
+            AgentConfig.set_model(selected_key)
+            print(f"✅ Selected model: {models[selected_key]}")
+        else:
+            print("❌ Invalid selection. Using current model.")
+    except (ValueError, KeyboardInterrupt):
+        print(f"✅ Using current model: {models[AgentConfig.SELECTED_MODEL]}")
+
+# Check for command line arguments
+if len(sys.argv) > 1:
+    if sys.argv[1] == '--select-model':
+        select_model_interactive()
+        sys.exit(0)
+    elif sys.argv[1] in ['--help', '-h']:
+        print("\n🤖 AWS DevOps Agent - Usage")
+        print("=" * 40)
+        print("python3 agent.py                 # Run agent with current model")
+        print("python3 agent.py --select-model  # Interactive model selection")
+        print("python3 select_model.py          # Standalone model selector")
+        print("\nAvailable Models:")
+        for key, desc in AgentConfig.list_models().items():
+            current = " (CURRENT)" if key == AgentConfig.SELECTED_MODEL else ""
+            print(f"  • {desc}{current}")
+        print()
+        sys.exit(0)
 
 # Initialize configuration
 REGION = AgentConfig.setup_aws_region()
@@ -412,8 +496,11 @@ def _format_search_results(results: list) -> str:
 # Create a Bedrock model instance with temperature control
 # Temperature 0.3: Focused and consistent responses, ideal for technical accuracy
 # Adjust temperature: 0.1-0.3 (very focused), 0.4-0.7 (balanced), 0.8-1.0 (creative)
+current_model_id = AgentConfig.get_model_id()
+print(f"🤖 Using MODEL_ID: {current_model_id}")
+print(f"📝 Model Description: {AgentConfig.list_models()[AgentConfig.SELECTED_MODEL]}")
 model = BedrockModel(
-    model_id=AgentConfig.MODEL_ID, 
+    model_id=current_model_id, 
     temperature=AgentConfig.MODEL_TEMPERATURE
 )
 

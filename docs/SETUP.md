@@ -79,6 +79,24 @@ open http://localhost:8501
 Great for developers and automation:
 
 ```bash
+# Select your preferred Claude model
+python3 select_model.py
+
+# Run interactive CLI agent
+python3 agent.py
+
+# Or select model and run in one step
+python3 agent.py --select-model
+```
+
+**Available Models:**
+- **Claude Sonnet 4** - Latest, most capable
+- **Claude 3.7 Sonnet** - Enhanced reasoning
+- **Claude 3.5 Sonnet v2** - Balanced performance (default)
+- **Claude 3.5 Sonnet v1** - Stable version
+- **Claude 3.5 Haiku** - Fast and efficient
+
+```bash
 # Interactive CLI mode
 python3 agent.py
 

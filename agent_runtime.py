@@ -209,7 +209,7 @@ def invoke(payload: Dict[str, Any]) -> Dict[str, Any]:
             result = {
                 "message": message_text,
                 "timestamp": datetime.utcnow().isoformat(),
-                "model": AgentConfig.MODEL_ID,
+                "model": AgentConfig.get_model_id(),
                 "session_id": session_id,
                 "status": "success"
             }
