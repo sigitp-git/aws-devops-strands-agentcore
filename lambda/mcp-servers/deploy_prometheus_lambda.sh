@@ -1,15 +1,16 @@
 #!/bin/bash
 
-# Deploy All MCP Servers as Lambda Functions
-# This script deploys all MCP server Lambda functions following Lambda best practices
+# Deploy Prometheus MCP Server Lambda Function
+# This script deploys the Prometheus Lambda function with proper IAM permissions
 
 set -e
 
-echo "🚀 Deploying All MCP Server Lambda Functions"
-echo "=============================================="
+echo "🚀 Deploying Prometheus MCP Server Lambda Function"
+echo "=================================================="
 
 # Configuration
 REGION=${AWS_DEFAULT_REGION:-us-east-1}
+FUNCTION_NAME="mcp-prometheus-server"
 LAMBDA_ROLE_NAME="MCPLambdaExecutionRole"
 LAMBDA_TIMEOUT=300
 LAMBDA_MEMORY=512
@@ -61,6 +62,49 @@ create_iam_role() {
     # Check if role exists
     if aws iam get-role --role-name "$LAMBDA_ROLE_NAME" > /dev/null 2>&1; then
         print_success "IAM role already exists: $ROLE_ARN"
+        
+        # Update the role policy to include Prometheus permissions
+        print_status "Updating IAM role policy for Prometheus..."
+        
+        cat > /tmp/mcp-policy.json << EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:GetParameter",
+                "ssm:GetParameters",
+                "ssm:PutParameter",
+                "bedrock:*",
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:ListBucket",
+                "pricing:*",
+                "logs:*",
+                "cloudwatch:*",
+                "eks:*",
+                "ec2:Describe*",
+                "iam:GetRole",
+                "iam:ListRoles",
+                "location:*",
+                "cloudformation:Describe*",
+                "cloudformation:List*",
+                "aps:*",
+                "amp:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+        
+        aws iam put-role-policy \
+            --role-name "$LAMBDA_ROLE_NAME" \
+            --policy-name "MCPServerPolicy" \
+            --policy-document file:///tmp/mcp-policy.json
+        
+        print_success "Updated IAM role policy with Prometheus permissions"
         return 0
     fi
     
@@ -91,7 +135,7 @@ EOF
         --role-name "$LAMBDA_ROLE_NAME" \
         --policy-arn "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
     
-    # Create and attach MCP-specific policy
+    # Create and attach MCP-specific policy with Prometheus permissions
     cat > /tmp/mcp-policy.json << EOF
 {
     "Version": "2012-10-17",
@@ -137,22 +181,19 @@ EOF
     sleep 10
 }
 
-# Deploy individual Lambda function
-deploy_lambda_function() {
-    local FUNCTION_FILE=$1
-    local FUNCTION_NAME=$2
-    local DESCRIPTION=$3
-    
-    print_status "Deploying $FUNCTION_NAME..."
+# Deploy Prometheus Lambda function
+deploy_prometheus_lambda() {
+    print_status "Deploying Prometheus Lambda function..."
     
     # Create deployment package
     TEMP_DIR=$(mktemp -d)
     
     # Copy function code
-    cp "$FUNCTION_FILE" "$TEMP_DIR/lambda_function.py"
+    cp "prometheus_lambda.py" "$TEMP_DIR/lambda_function.py"
     
     # Install dependencies
     if [ -f "lambda_requirements.txt" ]; then
+        print_status "Installing dependencies..."
         pip install -r lambda_requirements.txt -t "$TEMP_DIR" --quiet
     fi
     
@@ -166,6 +207,8 @@ deploy_lambda_function() {
     
     if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
         # Update existing function
+        print_status "Updating existing function..."
+        
         aws lambda update-function-code \
             --function-name "$FUNCTION_NAME" \
             --zip-file "fileb://${TEMP_DIR}/../${FUNCTION_NAME}.zip" > /dev/null
@@ -173,18 +216,21 @@ deploy_lambda_function() {
         aws lambda update-function-configuration \
             --function-name "$FUNCTION_NAME" \
             --timeout "$LAMBDA_TIMEOUT" \
-            --memory-size "$LAMBDA_MEMORY" > /dev/null
+            --memory-size "$LAMBDA_MEMORY" \
+            --environment "Variables={MCP_SERVER_NAME=$FUNCTION_NAME,MCP_REGION=$REGION}" > /dev/null
         
         print_success "Updated $FUNCTION_NAME"
     else
         # Create new function
+        print_status "Creating new function..."
+        
         aws lambda create-function \
             --function-name "$FUNCTION_NAME" \
             --runtime "$LAMBDA_RUNTIME" \
             --role "$ROLE_ARN" \
             --handler "lambda_function.lambda_handler" \
             --zip-file "fileb://${TEMP_DIR}/../${FUNCTION_NAME}.zip" \
-            --description "$DESCRIPTION" \
+            --description "Prometheus MCP server for monitoring and metrics" \
             --timeout "$LAMBDA_TIMEOUT" \
             --memory-size "$LAMBDA_MEMORY" \
             --environment "Variables={MCP_SERVER_NAME=$FUNCTION_NAME,MCP_REGION=$REGION}" > /dev/null
@@ -192,14 +238,58 @@ deploy_lambda_function() {
         print_success "Created $FUNCTION_NAME"
     fi
     
+    # Get function info
+    FUNCTION_ARN=$(aws lambda get-function --function-name "$FUNCTION_NAME" --query 'Configuration.FunctionArn' --output text)
+    
     # Cleanup
     rm -rf "$TEMP_DIR"
     rm -f "${TEMP_DIR}/../${FUNCTION_NAME}.zip"
+    
+    print_success "Function ARN: $FUNCTION_ARN"
+}
+
+# Test the deployed function
+test_function() {
+    print_status "Testing deployed function..."
+    
+    # Create test payload
+    cat > /tmp/test-payload.json << EOF
+{
+    "operation": "get_available_workspaces",
+    "region": "$REGION"
+}
+EOF
+    
+    # Invoke function
+    print_status "Invoking function with test payload..."
+    
+    aws lambda invoke \
+        --function-name "$FUNCTION_NAME" \
+        --payload file:///tmp/test-payload.json \
+        --cli-binary-format raw-in-base64-out \
+        /tmp/response.json > /dev/null
+    
+    # Check response
+    if [ -f "/tmp/response.json" ]; then
+        RESPONSE=$(cat /tmp/response.json)
+        if echo "$RESPONSE" | grep -q '"success": true'; then
+            print_success "Function test passed!"
+            print_status "Response: $(echo "$RESPONSE" | jq -r '.body' | jq -r '.data.count // "No workspaces"') workspaces found"
+        else
+            print_warning "Function test completed but may have issues"
+            print_status "Response: $RESPONSE"
+        fi
+    else
+        print_warning "No response file generated"
+    fi
+    
+    # Cleanup test files
+    rm -f /tmp/test-payload.json /tmp/response.json
 }
 
 # Main deployment function
 main() {
-    print_status "Starting MCP Lambda deployment process..."
+    print_status "Starting Prometheus Lambda deployment..."
     
     # Check prerequisites
     check_aws_config
@@ -207,62 +297,23 @@ main() {
     # Create IAM role
     create_iam_role
     
-    # Deploy each MCP server Lambda function
-    print_status "Deploying MCP server Lambda functions..."
+    # Deploy function
+    deploy_prometheus_lambda
     
-    # Core MCP Server
-    deploy_lambda_function "core_lambda.py" "mcp-core-server" "Core MCP server functionality"
-    
-    # AWS Documentation Server
-    deploy_lambda_function "aws_documentation_lambda.py" "mcp-aws-documentation-server" "AWS Documentation search and retrieval"
-    
-    # AWS Pricing Server
-    deploy_lambda_function "aws_pricing_lambda.py" "mcp-aws-pricing-server" "AWS Pricing information and analysis"
-    
-    # CloudWatch Server
-    deploy_lambda_function "cloudwatch_lambda.py" "mcp-cloudwatch-server" "CloudWatch logs and metrics"
-    
-    # EKS Server
-    deploy_lambda_function "eks_lambda.py" "mcp-eks-server" "EKS cluster management and monitoring"
-    
-    # Terraform Server
-    deploy_lambda_function "terraform_lambda.py" "mcp-terraform-server" "Terraform configuration and validation"
-    
-    # Git Repository Research Server
-    deploy_lambda_function "git_repo_research_lambda.py" "mcp-git-repo-research-server" "Git repository research and analysis"
-    
-    # Frontend Server
-    deploy_lambda_function "frontend_lambda.py" "mcp-frontend-server" "Frontend development guidance and React documentation"
-    
-    # AWS Location Server
-    deploy_lambda_function "aws_location_lambda.py" "mcp-aws-location-server" "AWS Location Service operations"
-    
-    # Prometheus Server
-    deploy_lambda_function "prometheus_lambda.py" "mcp-prometheus-server" "Prometheus monitoring and metrics"
-    
-    print_success "All MCP server Lambda functions deployed successfully!"
+    # Test function
+    test_function
     
     # Save deployment information
-    print_status "Saving deployment information to SSM..."
+    print_status "Saving deployment information..."
     
     DEPLOYMENT_INFO=$(cat << EOF
 {
+    "function_name": "$FUNCTION_NAME",
     "deployment_timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
     "region": "$REGION",
     "account_id": "$ACCOUNT_ID",
     "lambda_role": "$LAMBDA_ROLE_NAME",
-    "deployed_functions": [
-        "mcp-core-server",
-        "mcp-aws-documentation-server",
-        "mcp-aws-pricing-server",
-        "mcp-cloudwatch-server",
-        "mcp-eks-server",
-        "mcp-terraform-server",
-        "mcp-git-repo-research-server",
-        "mcp-frontend-server",
-        "mcp-aws-location-server",
-        "mcp-prometheus-server"
-    ],
+    "function_arn": "$(aws lambda get-function --function-name "$FUNCTION_NAME" --query 'Configuration.FunctionArn' --output text)",
     "lambda_config": {
         "runtime": "$LAMBDA_RUNTIME",
         "timeout": $LAMBDA_TIMEOUT,
@@ -273,7 +324,7 @@ EOF
 )
     
     aws ssm put-parameter \
-        --name "/app/devopsagent/mcp/lambda_deployments" \
+        --name "/app/devopsagent/mcp/prometheus_lambda" \
         --value "$DEPLOYMENT_INFO" \
         --type "String" \
         --tier "Advanced" \
@@ -283,29 +334,30 @@ EOF
     
     # Display summary
     echo ""
-    echo "🎉 Deployment Summary"
-    echo "===================="
-    echo "✅ 10 Lambda functions deployed successfully"
-    echo "✅ IAM role configured: $LAMBDA_ROLE_NAME"
+    echo "🎉 Prometheus Lambda Deployment Complete!"
+    echo "========================================"
+    echo "✅ Function: $FUNCTION_NAME"
     echo "✅ Region: $REGION"
     echo "✅ Account: $ACCOUNT_ID"
+    echo "✅ IAM Role: $LAMBDA_ROLE_NAME"
     echo ""
     echo "💡 Next Steps:"
-    echo "1. Configure AgentCore Gateway to use these Lambda functions"
-    echo "2. Test the deployed functions using the test scripts"
-    echo "3. Update your MCP configuration to use Lambda endpoints"
+    echo "1. Configure AgentCore Gateway to use this Lambda function"
+    echo "2. Test with your Prometheus workspace ID"
+    echo "3. Update MCP configuration if needed"
     echo ""
-    echo "📋 Deployed Functions:"
-    echo "  • mcp-core-server"
-    echo "  • mcp-aws-documentation-server"
-    echo "  • mcp-aws-pricing-server"
-    echo "  • mcp-cloudwatch-server"
-    echo "  • mcp-eks-server"
-    echo "  • mcp-terraform-server"
-    echo "  • mcp-git-repo-research-server"
-    echo "  • mcp-frontend-server"
-    echo "  • mcp-aws-location-server"
-    echo "  • mcp-prometheus-server"
+    echo "🔧 Available Operations:"
+    echo "  • execute_query - Instant PromQL queries"
+    echo "  • execute_range_query - Range queries over time"
+    echo "  • list_metrics - Discover available metrics"
+    echo "  • get_server_info - Server configuration info"
+    echo "  • get_available_workspaces - List workspaces"
+    echo ""
+    echo "📋 Function Details:"
+    echo "  Function Name: $FUNCTION_NAME"
+    echo "  Runtime: $LAMBDA_RUNTIME"
+    echo "  Memory: ${LAMBDA_MEMORY}MB"
+    echo "  Timeout: ${LAMBDA_TIMEOUT}s"
 }
 
 # Run main function

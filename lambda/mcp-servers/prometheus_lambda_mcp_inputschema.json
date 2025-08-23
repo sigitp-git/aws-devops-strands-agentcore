@@ -1,0 +1,180 @@
+[
+    {
+        "name": "execute_query",
+        "description": "Execute a PromQL query against Amazon Managed Prometheus at a specific instant in time",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "workspace_id": {
+                    "type": "string",
+                    "description": "The Prometheus workspace ID to use (e.g., ws-12345678-abcd-1234-efgh-123456789012)"
+                },
+                "query": {
+                    "type": "string",
+                    "description": "The PromQL query to execute"
+                },
+                "time": {
+                    "type": "string",
+                    "description": "Optional timestamp for query evaluation (RFC3339 or Unix timestamp)"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region (defaults to current region)",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["workspace_id", "query"]
+        }
+    },
+    {
+        "name": "execute_range_query",
+        "description": "Execute a range query and return the result over a time range",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "workspace_id": {
+                    "type": "string",
+                    "description": "The Prometheus workspace ID to use (e.g., ws-12345678-abcd-1234-efgh-123456789012)"
+                },
+                "query": {
+                    "type": "string",
+                    "description": "The PromQL query to execute"
+                },
+                "start": {
+                    "type": "string",
+                    "description": "Start timestamp (RFC3339 or Unix timestamp)"
+                },
+                "end": {
+                    "type": "string",
+                    "description": "End timestamp (RFC3339 or Unix timestamp)"
+                },
+                "step": {
+                    "type": "string",
+                    "description": "Query resolution step width (duration format, e.g. '15s', '1m', '1h')"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region (defaults to current region)",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["workspace_id", "query", "start", "end", "step"]
+        }
+    },
+    {
+        "name": "list_metrics",
+        "description": "Get a list of all metric names available in the Prometheus server",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "workspace_id": {
+                    "type": "string",
+                    "description": "The Prometheus workspace ID to use (e.g., ws-12345678-abcd-1234-efgh-123456789012)"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region (defaults to current region)",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["workspace_id"]
+        }
+    },
+    {
+        "name": "get_server_info",
+        "description": "Get information about the Prometheus server configuration",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "workspace_id": {
+                    "type": "string",
+                    "description": "The Prometheus workspace ID to use (e.g., ws-12345678-abcd-1234-efgh-123456789012)"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region (defaults to current region)",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["workspace_id"]
+        }
+    },
+    {
+        "name": "get_available_workspaces",
+        "description": "List all available Prometheus workspaces in the specified region",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "profile": {
+                    "type": "string",
+                    "description": "AWS profile to use (defaults to None)"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region (defaults to current region)",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            }
+        }
+    }
+]
