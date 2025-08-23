@@ -1,0 +1,45 @@
+{
+  "enabled": true,
+  "name": "Security Commit Guard",
+  "description": "Monitors all source files and configuration files for security sensitive content before commits. Scans for credentials, tokens, keys, secrets, account IDs, authentication URLs and other sensitive data to prevent accidental exposure.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.py",
+      "*.js",
+      "*.ts",
+      "*.java",
+      "*.cpp",
+      "*.c",
+      "*.h",
+      "*.go",
+      "*.rb",
+      "*.php",
+      "*.sh",
+      "*.yml",
+      "*.yaml",
+      "*.json",
+      "*.xml",
+      "*.env",
+      "*.config",
+      "*.conf",
+      "*.ini",
+      "*.properties",
+      "*.toml",
+      "*.cfg",
+      "*.txt",
+      "*.md",
+      "requirements.txt",
+      "package.json",
+      "Dockerfile*",
+      "*.dockerfile",
+      "Makefile",
+      "*.mk"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the changed files for security sensitive contents that should not be committed to version control. Look for:\n\n1. **Credentials & Authentication:**\n   - API keys, access keys, secret keys\n   - Passwords, passphrases, tokens\n   - JWT tokens, OAuth tokens, session tokens\n   - Database connection strings with credentials\n   - Private keys, certificates, SSH keys\n\n2. **Account & Service Identifiers:**\n   - AWS account IDs, user IDs\n   - Service account emails\n   - Authentication URLs with embedded credentials\n   - Internal service endpoints with auth parameters\n\n3. **Configuration Secrets:**\n   - Environment variables containing secrets\n   - Configuration files with hardcoded credentials\n   - Connection strings with passwords\n   - Webhook URLs with tokens\n\n4. **Patterns to Flag:**\n   - Long alphanumeric strings that look like keys/tokens\n   - Base64 encoded credentials\n   - URLs with authentication parameters\n   - Email addresses in sensitive contexts\n   - IP addresses of internal services\n\n**Response Format:**\nIf security issues are found:\n- List each security concern with file name and line number\n- Explain why it's a security risk\n- Suggest remediation (use environment variables, AWS Secrets Manager, etc.)\n- Recommend BLOCKING the commit\n\nIf no security issues found:\n- Confirm the files are safe to commit\n- Briefly mention what was checked\n\nFocus on preventing credential leaks while avoiding false positives for legitimate code patterns."
+  }
+}
