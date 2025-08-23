@@ -1,0 +1,36 @@
+# AWS SDK and core dependencies
+boto3>=1.40.8
+botocore>=1.40.8
+
+# HTTP requests
+requests>=2.31.0
+
+# JSON handling (built-in, but explicit for clarity)
+# json - built-in module
+
+# Date/time handling (built-in)
+# datetime - built-in module
+
+# Logging (built-in)
+# logging - built-in module
+
+# Type hints (built-in in Python 3.5+)
+# typing - built-in module
+
+# Path handling (built-in in Python 3.4+)
+# pathlib - built-in module
+
+# Temporary files (built-in)
+# tempfile - built-in module
+
+# Subprocess (built-in)
+# subprocess - built-in module
+
+# Base64 encoding (built-in)
+# base64 - built-in module
+
+# Math operations (built-in)
+# math - built-in module
+
+# OS operations (built-in)
+# os - built-in module

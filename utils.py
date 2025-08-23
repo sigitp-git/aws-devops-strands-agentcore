@@ -18,7 +18,7 @@ def get_ssm_parameter(name: str, with_decryption: bool = True) -> str | None:
 
 
 def put_ssm_parameter(
-    name: str, value: str, parameter_type: str = "String", with_encryption: bool = False
+    name: str, value: str, parameter_type: str = "String", with_encryption: bool = False, tier: str = "Standard"
 ) -> None:
     ssm = boto3.client("ssm")
 
@@ -27,6 +27,7 @@ def put_ssm_parameter(
         "Value": value,
         "Type": parameter_type,
         "Overwrite": True,
+        "Tier": tier,
     }
 
     if with_encryption:

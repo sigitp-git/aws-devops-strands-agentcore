@@ -194,6 +194,9 @@ secrets.json
 config.json
 .secrets
 
+# MCP configuration with credentials
+awslabs-mcp/.env
+
 # Lambda package
 lambda_package/
 *.zip

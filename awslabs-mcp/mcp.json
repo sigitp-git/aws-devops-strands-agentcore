@@ -1,0 +1,211 @@
+{
+    "mcpServers": {
+      "awslabs.core-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.core-mcp-server@latest"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": []
+      },
+      "awslabs.aws-pricing-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.aws-pricing-mcp-server@latest"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR",
+          "AWS_REGION": "us-east-1"
+        },
+        "disabled": false,
+        "autoApprove": []
+      },
+      "awslabs.aws-documentation-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.aws-documentation-mcp-server@latest"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": [
+          "search_documentation",
+          "read_documentation"
+        ]
+      },
+      "awslabs.frontend-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.frontend-mcp-server@latest"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": []
+      },
+      "awslabs.aws-location-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.aws-location-mcp-server@latest"
+        ],
+        "env": {
+          "AWS_REGION": "us-east-1",
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": []
+      },
+      "awslabs.git-repo-research-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.git-repo-research-mcp-server@latest"
+        ],
+        "env": {
+          "AWS_REGION": "us-east-1",
+          "FASTMCP_LOG_LEVEL": "ERROR",
+          "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+        },
+        "disabled": false,
+        "autoApprove": [
+          "search_repos_on_github",
+          "access_file",
+          "create_research_repository"
+        ]
+      },
+      "awslabs.eks-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.eks-mcp-server@latest",
+          "--allow-write",
+          "--allow-sensitive-data-access"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": []
+      },
+      "awslabs.aws-diagram-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.aws-diagram-mcp-server"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": [
+          "list_icons",
+          "generate_diagram"
+        ]
+      },
+      "awslabs.prometheus-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.prometheus-mcp-server@latest",
+          "--url",
+          "${PROMETHEUS_WORKSPACE_URL}",
+          "--region",
+          "us-east-1"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "DEBUG"
+        },
+        "disabled": false,
+        "autoApprove": []
+      },
+      "awslabs.cfn-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.cfn-mcp-server@latest"
+        ],
+        "env": {},
+        "disabled": false,
+        "autoApprove": []
+      },
+      "github": {
+        "command": "docker",
+        "args": [
+          "run",
+          "-i",
+          "--rm",
+          "-e",
+          "GITHUB_PERSONAL_ACCESS_TOKEN",
+          "ghcr.io/github/github-mcp-server"
+        ],
+        "env": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+        },
+        "disabled": false,
+        "autoApprove": [
+          "create_repository"
+        ]
+      },
+      "awslabs.terraform-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.terraform-mcp-server@latest"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": []
+      },
+      "aws-knowledge-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "mcp-proxy",
+          "--transport",
+          "streamablehttp",
+          "https://knowledge-mcp.global.api.aws"
+        ],
+        "disabled": false,
+        "autoApprove": [
+          "aws___read_documentation"
+        ]
+      },
+      "awslabs.cloudwatch-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "awslabs.cloudwatch-mcp-server@latest"
+        ],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": []
+      },
+      "awslabs.cloudwatch-appsignals-mcp": {
+        "command": "uvx",
+        "args": [
+          "awslabs.cloudwatch-appsignals-mcp-server@latest"
+        ],
+        "env": {
+          "AWS_REGION": "us-east-1",
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": [
+          "list_monitored_services"
+        ]
+      },
+      "awslabs.ccapi-mcp-server": {
+        "command": "uvx",
+        "args": ["awslabs.ccapi-mcp-server@latest"],
+        "env": {
+          "AWS_PROFILE": "${AWS_PROFILE}",
+          "DEFAULT_TAGS": "enabled",
+          "SECURITY_SCANNING": "enabled",
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": []
+      }
+    }
+  }

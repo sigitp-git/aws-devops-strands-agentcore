@@ -21,7 +21,9 @@ An intelligent AWS DevOps assistant built with Amazon Bedrock and AgentCore Memo
 - **🔍 Real-time Search**: DuckDuckGo integration with deployable Lambda function
 - **🤖 Flexible Model Selection**: Choose from 5 Claude models (Sonnet 4, 3.7 Sonnet, 3.5 Sonnet v2, 3.5 Sonnet v1, 3.5 Haiku)
 - **⚡ AWS Expertise**: Specialized knowledge powered by configurable Claude models (temperature 0.3)
-- **🛠️ MCP Integration**: Advanced tool access through Bedrock AgentCore Gateway
+- **🛠️ MCP Integration**: Advanced tool access through Bedrock AgentCore Gateway with 16+ AWS services
+- **⚙️ MCP Server Management**: Automated loading and management of MCP servers from configuration
+- **☁️ Lambda MCP Servers**: 9 production-ready Lambda functions replacing local MCP processes
 - **🎯 Kiro IDE Integration**: Automated code quality analysis and documentation sync
 - **📦 ARM64 Optimized**: Docker container built for optimal performance
 
@@ -46,6 +48,58 @@ python3 select_model.py
 **CLI Agent with Model Selection:**
 ```bash
 python3 agent.py --select-model
+```
+
+## 🔧 MCP Server Configuration
+
+The agent automatically loads and manages MCP (Model Context Protocol) servers from `awslabs-mcp/mcp.json`. This provides access to 16+ AWS services and tools.
+
+### Quick MCP Setup
+
+1. **Configure Environment Variables:**
+   ```bash
+   cp awslabs-mcp/.env.example awslabs-mcp/.env
+   # Edit .env with your actual values
+   ```
+
+2. **Test Configuration:**
+   ```bash
+   python3 test_mcp_config.py
+   ```
+
+3. **Available MCP Tools (Lambda-Deployed):**
+   - **Core Services**: AWS context, prompt understanding, system status
+   - **AWS Documentation**: Search and retrieval with real-time access
+   - **AWS Pricing**: Cost analysis and service pricing information
+   - **CloudWatch**: Logs, metrics, and monitoring operations
+   - **EKS Management**: Cluster operations and Kubernetes integration
+   - **Terraform**: Configuration validation and template generation
+   - **Git Repository Research**: Code analysis and repository search
+   - **Frontend Development**: React guidance and component generation
+   - **AWS Location Services**: Mapping and geospatial operations
+
+### MCP Management Commands
+
+The agent provides built-in tools to manage MCP servers:
+
+- `list_mcp_servers()` - Show all configured servers and their status
+- `restart_mcp_server(server_name)` - Restart a specific server
+- `reload_mcp_config()` - Reload configuration and restart all servers
+
+### Environment Variables
+
+Required environment variables (see `awslabs-mcp/.env.example`):
+
+```bash
+# GitHub Integration
+GITHUB_TOKEN=your_github_personal_access_token
+GITHUB_PERSONAL_ACCESS_TOKEN=your_github_personal_access_token
+
+# AWS Configuration  
+AWS_PROFILE=your_aws_profile_name
+
+# Prometheus Configuration
+PROMETHEUS_WORKSPACE_URL=https://aps-workspaces.us-east-1.amazonaws.com/workspaces/your-workspace-id
 ```
 
 **Streamlit Web UI:**
@@ -125,9 +179,10 @@ python3 tests/test_runtime_local.py
 - **Cognito Authentication**: OAuth2 JWT tokens for secure access
 - **MCP Gateway**: Advanced tool integration
 - **Lambda Functions**: Scalable microservices architecture with AgentCore Gateway integration
-  - Web search capability with DuckDuckGo integration
-  - Prometheus monitoring with 4 specialized functions following Lambda best practices
-  - MCP (Model Context Protocol) framework integration for clean tool access
+  - **MCP Servers**: 9 Lambda functions replacing local uvx processes (100% test success rate)
+  - **Web Search**: DuckDuckGo integration with deployable Lambda function
+  - **Prometheus Monitoring**: 4 specialized functions following Lambda best practices
+  - **MCP Framework**: Clean tool access through Model Context Protocol integration
 
 ### AWS Services
 Amazon Bedrock • AgentCore Memory • Cognito • SSM Parameter Store • Lambda • IAM • CloudWatch

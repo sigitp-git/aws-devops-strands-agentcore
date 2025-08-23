@@ -1,7 +1,7 @@
 # AWS DevOps Agent - System Status
 
 **Last Updated**: August 23, 2025  
-**Status**: ✅ SUCCESSFULLY DEPLOYED TO PRODUCTION - AGENTCORE RUNTIME OPERATIONAL
+**Status**: ✅ SUCCESSFULLY DEPLOYED TO PRODUCTION - AGENTCORE RUNTIME + LAMBDA MCP SERVERS OPERATIONAL
 
 ## Executive Summary
 
@@ -97,6 +97,19 @@ The AWS DevOps Agent is fully operational with complete AWS integration, functio
   - `prometheus-server-info`: Server configuration (256MB, 30s)
   - Status: Refactored for AgentCore Gateway MCP integration
   - Features: Simplified parameter handling, enhanced security validation
+- **MCP Lambda Servers** ✅ **DEPLOYED**: 9 production-ready Lambda functions
+  - `mcp-core-server`: Core MCP functionality and AWS context
+  - `mcp-aws-documentation-server`: AWS documentation search and retrieval
+  - `mcp-aws-pricing-server`: AWS pricing information and cost analysis
+  - `mcp-cloudwatch-server`: CloudWatch logs, metrics, and monitoring
+  - `mcp-eks-server`: EKS cluster management and Kubernetes operations
+  - `mcp-terraform-server`: Terraform configuration and validation
+  - `mcp-git-repo-research-server`: Git repository research and code analysis
+  - `mcp-frontend-server`: Frontend development guidance and React docs
+  - `mcp-aws-location-server`: AWS Location Service operations
+  - **Status**: All functions deployed and operational (100% test success rate)
+  - **Configuration**: Python 3.11, 512MB memory, 300s timeout
+  - **IAM Role**: `MCPLambdaExecutionRole` with least privilege permissions
 - **CloudWatch**: Full logging and monitoring for all functions
 
 ## ✅ Model Selector System

@@ -173,7 +173,9 @@ class AgentRuntimeDeployer:
                         'containerConfiguration': {
                             'containerUri': f"{self.ecr_uri}:{self.image_tag}"
                         }
-                    }
+                    },
+                    roleArn=execution_role_arn,
+                    networkConfiguration={"networkMode": "PUBLIC"}
                 )
                 print("✅ Agent runtime updated successfully")
             else:
@@ -220,10 +222,14 @@ class AgentRuntimeDeployer:
                 "session_id": f"test-{int(time.time())}"
             }
             
-            # Invoke the agent
+            # Invoke the agent (session ID must be at least 33 characters)
+            session_id = f"test-session-{int(time.time())}-{hash(str(time.time()))}"[:50]
+            if len(session_id) < 33:
+                session_id = session_id + "0" * (33 - len(session_id))
+            
             response = agentcore_runtime_client.invoke_agent_runtime(
                 agentRuntimeArn=agent_runtime_arn,
-                runtimeSessionId=f"test-session-{int(time.time())}",
+                runtimeSessionId=session_id,
                 payload=json.dumps(test_payload).encode('utf-8')
             )
             
