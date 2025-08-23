@@ -1,0 +1,170 @@
+[
+    {
+        "name": "get_react_docs_by_topic",
+        "description": "Get specific AWS web application UI setup documentation by topic",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "topic": {
+                    "type": "string",
+                    "description": "The topic of React documentation to retrieve",
+                    "enum": ["essential-knowledge", "troubleshooting"]
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["topic"]
+        }
+    },
+    {
+        "name": "get_frontend_guidance",
+        "description": "Get frontend development guidance and best practices for AWS applications",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "framework": {
+                    "type": "string",
+                    "description": "Frontend framework to get guidance for",
+                    "default": "react",
+                    "enum": ["react", "vue", "angular", "nextjs", "nuxt"]
+                },
+                "topic": {
+                    "type": "string",
+                    "description": "Specific topic area for guidance",
+                    "enum": ["authentication", "deployment", "performance", "security", "testing", "state-management", "aws-integration"]
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "name": "generate_component_template",
+        "description": "Generate a React component template with AWS integration patterns",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "component_name": {
+                    "type": "string",
+                    "description": "Name of the React component to generate"
+                },
+                "component_type": {
+                    "type": "string",
+                    "description": "Type of component to generate",
+                    "default": "functional",
+                    "enum": ["functional", "class", "hook", "context"]
+                },
+                "aws_services": {
+                    "type": "array",
+                    "description": "AWS services to integrate with the component",
+                    "items": {
+                        "type": "string",
+                        "enum": ["cognito", "s3", "api-gateway", "lambda", "dynamodb", "amplify"]
+                    }
+                },
+                "styling": {
+                    "type": "string",
+                    "description": "Styling approach for the component",
+                    "default": "css-modules",
+                    "enum": ["css-modules", "styled-components", "tailwind", "material-ui", "chakra-ui"]
+                },
+                "typescript": {
+                    "type": "boolean",
+                    "description": "Generate TypeScript version of the component",
+                    "default": true
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["component_name"]
+        }
+    },
+    {
+        "name": "validate_frontend_config",
+        "description": "Validate frontend configuration for AWS deployment",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "config_type": {
+                    "type": "string",
+                    "description": "Type of configuration to validate",
+                    "enum": ["amplify", "s3-cloudfront", "elastic-beanstalk", "ecs", "lambda"]
+                },
+                "config_data": {
+                    "type": "object",
+                    "description": "Configuration data to validate",
+                    "additionalProperties": true
+                },
+                "environment": {
+                    "type": "string",
+                    "description": "Target deployment environment",
+                    "default": "production",
+                    "enum": ["development", "staging", "production"]
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for deployment",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["config_type"]
+        }
+    }
+]

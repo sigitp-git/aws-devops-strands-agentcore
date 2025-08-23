@@ -1,0 +1,310 @@
+[
+    {
+        "name": "list_clusters",
+        "description": "List EKS clusters in the specified region",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "region": {
+                    "type": "string",
+                    "description": "AWS region to query for EKS clusters",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "name": "describe_cluster",
+        "description": "Get detailed information about a specific EKS cluster",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "cluster_name": {
+                    "type": "string",
+                    "description": "Name of the EKS cluster to describe"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region where the cluster is located",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["cluster_name"]
+        }
+    },
+    {
+        "name": "list_node_groups",
+        "description": "List node groups for a specific EKS cluster",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "cluster_name": {
+                    "type": "string",
+                    "description": "Name of the EKS cluster"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region where the cluster is located",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["cluster_name"]
+        }
+    },
+    {
+        "name": "describe_node_group",
+        "description": "Get detailed information about a specific EKS node group",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "cluster_name": {
+                    "type": "string",
+                    "description": "Name of the EKS cluster"
+                },
+                "node_group_name": {
+                    "type": "string",
+                    "description": "Name of the node group to describe"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region where the cluster is located",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["cluster_name", "node_group_name"]
+        }
+    },
+    {
+        "name": "get_cloudwatch_logs",
+        "description": "Get logs from CloudWatch for a specific EKS resource",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "resource_type": {
+                    "type": "string",
+                    "description": "Resource type to search logs for",
+                    "enum": ["pod", "node", "container", "cluster"]
+                },
+                "cluster_name": {
+                    "type": "string",
+                    "description": "Name of the EKS cluster where the resource is located"
+                },
+                "log_type": {
+                    "type": "string",
+                    "description": "Log type to query",
+                    "enum": ["application", "host", "performance", "control-plane"]
+                },
+                "resource_name": {
+                    "type": "string",
+                    "description": "Resource name to search for in log messages"
+                },
+                "minutes": {
+                    "type": "integer",
+                    "description": "Number of minutes to look back for logs",
+                    "default": 15,
+                    "minimum": 1,
+                    "maximum": 10080
+                },
+                "start_time": {
+                    "type": "string",
+                    "description": "Start time in ISO format (overrides minutes parameter)"
+                },
+                "end_time": {
+                    "type": "string",
+                    "description": "End time in ISO format (defaults to now)"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of log entries to return",
+                    "default": 50,
+                    "minimum": 1,
+                    "maximum": 1000
+                },
+                "filter_pattern": {
+                    "type": "string",
+                    "description": "Additional CloudWatch Logs filter pattern"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region where the cluster is located",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["resource_type", "cluster_name", "log_type"]
+        }
+    },
+    {
+        "name": "get_cloudwatch_metrics",
+        "description": "Get metrics from CloudWatch for a specific EKS resource",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "cluster_name": {
+                    "type": "string",
+                    "description": "Name of the EKS cluster to get metrics for"
+                },
+                "metric_name": {
+                    "type": "string",
+                    "description": "Metric name to retrieve (e.g., cpu_usage_total, memory_rss)"
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "CloudWatch namespace where the metric is stored",
+                    "default": "ContainerInsights"
+                },
+                "dimensions": {
+                    "type": "object",
+                    "description": "Dimensions to use for the CloudWatch metric query",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "minutes": {
+                    "type": "integer",
+                    "description": "Number of minutes to look back for metrics",
+                    "default": 15,
+                    "minimum": 1,
+                    "maximum": 10080
+                },
+                "start_time": {
+                    "type": "string",
+                    "description": "Start time in ISO format (overrides minutes parameter)"
+                },
+                "end_time": {
+                    "type": "string",
+                    "description": "End time in ISO format (defaults to now)"
+                },
+                "period": {
+                    "type": "integer",
+                    "description": "Period in seconds for the metric data points",
+                    "default": 60,
+                    "minimum": 1,
+                    "maximum": 86400
+                },
+                "stat": {
+                    "type": "string",
+                    "description": "Statistic to use for the metric aggregation",
+                    "default": "Average",
+                    "enum": ["Average", "Sum", "Maximum", "Minimum", "SampleCount"]
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of data points to return",
+                    "default": 50,
+                    "minimum": 1,
+                    "maximum": 1000
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region where the cluster is located",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["cluster_name", "metric_name", "namespace", "dimensions"]
+        }
+    },
+    {
+        "name": "search_eks_troubleshoot_guide",
+        "description": "Search the EKS Troubleshoot Guide for troubleshooting information",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Your specific question or issue description related to EKS troubleshooting",
+                    "maxLength": 300
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["query"]
+        }
+    }
+]

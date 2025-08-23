@@ -52,7 +52,7 @@ class AgentConfig:
     }
     
     # Default model selection
-    SELECTED_MODEL = 'claude-3-5-sonnet-v2'
+    SELECTED_MODEL = 'claude-3-5-haiku'
     
     @classmethod
     def get_model_id(cls):

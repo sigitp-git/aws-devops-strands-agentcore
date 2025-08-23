@@ -1,0 +1,70 @@
+[
+    {
+       "name": "prompt_understanding",
+       "description": "Analyze and understand user prompts for AWS expert advice and consultation",
+       "inputSchema": {
+          "type": "object",
+          "properties": {
+             "region": {
+                "type": "string",
+                "description": "AWS region for context",
+                "default": "us-east-1",
+                "enum": [
+                   "us-east-1",
+                   "us-east-2",
+                   "us-west-1",
+                   "us-west-2",
+                   "eu-west-1",
+                   "eu-west-2",
+                   "eu-central-1",
+                   "ap-southeast-1",
+                   "ap-southeast-2",
+                   "ap-northeast-1"
+                ]
+             }
+          }
+       }
+    },
+    {
+       "name": "get_aws_context",
+       "description": "Get current AWS context information including account details, region, and session info",
+       "inputSchema": {
+          "type": "object",
+          "properties": {
+             "region": {
+                "type": "string",
+                "description": "AWS region for context",
+                "default": "us-east-1"
+             }
+          }
+       }
+    },
+    {
+       "name": "get_system_status",
+       "description": "Get system status and health information for AWS services and Lambda function",
+       "inputSchema": {
+          "type": "object",
+          "properties": {
+             "region": {
+                "type": "string",
+                "description": "AWS region for status check",
+                "default": "us-east-1"
+             }
+          }
+       }
+    },
+    {
+       "name": "get_configuration",
+       "description": "Get current configuration settings for the core MCP server",
+       "inputSchema": {
+          "type": "object",
+          "properties": {
+             "region": {
+                "type": "string",
+                "description": "AWS region for configuration",
+                "default": "us-east-1"
+             }
+          }
+       }
+    }
+ ]

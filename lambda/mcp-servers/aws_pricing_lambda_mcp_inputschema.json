@@ -1,0 +1,177 @@
+[
+    {
+        "name": "get_pricing_service_codes",
+        "description": "Get AWS service codes available in the Price List API",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context (Pricing API uses us-east-1)",
+                    "default": "us-east-1"
+                }
+            }
+        }
+    },
+    {
+        "name": "get_pricing_service_attributes",
+        "description": "Get filterable attributes available for an AWS service in the Pricing API",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "service_code": {
+                    "type": "string",
+                    "description": "AWS service code (e.g., 'AmazonEC2', 'AmazonS3', 'AmazonES')"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context (Pricing API uses us-east-1)",
+                    "default": "us-east-1"
+                }
+            },
+            "required": ["service_code"]
+        }
+    },
+    {
+        "name": "get_pricing_attribute_values",
+        "description": "Get valid values for pricing filter attributes",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "service_code": {
+                    "type": "string",
+                    "description": "AWS service code (e.g., 'AmazonEC2', 'AmazonS3', 'AmazonES')"
+                },
+                "attribute_names": {
+                    "type": "array",
+                    "description": "List of attribute names to get values for",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context (Pricing API uses us-east-1)",
+                    "default": "us-east-1"
+                }
+            },
+            "required": ["service_code", "attribute_names"]
+        }
+    },
+    {
+        "name": "get_pricing",
+        "description": "Get detailed pricing information from AWS Price List API with optional filters",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "service_code": {
+                    "type": "string",
+                    "description": "AWS service code (e.g., 'AmazonEC2', 'AmazonS3', 'AmazonES')"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for pricing data (can also accept array as string)",
+                    "default": "us-east-1"
+                },
+                "filters": {
+                    "type": "array",
+                    "description": "Optional list of filters to apply to the pricing query",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "Field": {
+                                "type": "string",
+                                "description": "The field to filter on (e.g., 'instanceType', 'location')"
+                            },
+                            "Value": {
+                                "type": "string",
+                                "description": "The value to match against (use JSON string for arrays)"
+                            },
+                            "Type": {
+                                "type": "string",
+                                "description": "The type of filter match (EQUALS, CONTAINS, ANY_OF, NONE_OF)",
+                                "default": "EQUALS"
+                            }
+                        },
+                        "required": ["Field", "Value"]
+                    }
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of results to return per page",
+                    "default": 100,
+                    "minimum": 1,
+                    "maximum": 100
+                },
+                "next_token": {
+                    "type": "string",
+                    "description": "Pagination token from previous response to get next page of results"
+                },
+                "max_allowed_characters": {
+                    "type": "integer",
+                    "description": "Response size limit in characters (default: 100,000, use -1 for unlimited)",
+                    "default": 100000
+                }
+            },
+            "required": ["service_code", "region"]
+        }
+    },
+    {
+        "name": "generate_cost_report",
+        "description": "Generate a detailed cost analysis report based on pricing data",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pricing_data": {
+                    "type": "object",
+                    "description": "Raw pricing data from AWS pricing tools"
+                },
+                "service_name": {
+                    "type": "string",
+                    "description": "Name of the AWS service"
+                },
+                "related_services": {
+                    "type": "array",
+                    "description": "List of related AWS services",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "pricing_model": {
+                    "type": "string",
+                    "description": "Pricing model (e.g., 'ON DEMAND', 'Reserved')",
+                    "default": "ON DEMAND"
+                },
+                "assumptions": {
+                    "type": "array",
+                    "description": "List of assumptions for cost analysis",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "exclusions": {
+                    "type": "array",
+                    "description": "List of items excluded from cost analysis",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "format": {
+                    "type": "string",
+                    "description": "Output format (markdown or csv)",
+                    "default": "markdown"
+                },
+                "output_file": {
+                    "type": "string",
+                    "description": "Path to save the report file"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context",
+                    "default": "us-east-1"
+                }
+            },
+            "required": ["pricing_data", "service_name"]
+        }
+    }
+]

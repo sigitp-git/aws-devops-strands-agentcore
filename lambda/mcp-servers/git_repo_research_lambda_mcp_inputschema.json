@@ -1,0 +1,226 @@
+[
+    {
+        "name": "search_repos_on_github",
+        "description": "Search for GitHub repositories based on keywords, scoped to specific AWS organizations",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "keywords": {
+                    "type": "array",
+                    "description": "List of keywords to search for GitHub repositories",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1
+                },
+                "num_results": {
+                    "type": "integer",
+                    "description": "Number of results to return",
+                    "default": 5,
+                    "minimum": 1,
+                    "maximum": 50
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["keywords"]
+        }
+    },
+    {
+        "name": "create_research_repository",
+        "description": "Build a FAISS index for a Git repository for semantic search",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "repository_path": {
+                    "type": "string",
+                    "description": "Path to local repository or URL to remote repository"
+                },
+                "output_path": {
+                    "type": "string",
+                    "description": "Where to store the index (optional, uses default if not provided)"
+                },
+                "embedding_model": {
+                    "type": "string",
+                    "description": "Which AWS embedding model to use",
+                    "default": "amazon.titan-embed-text-v2:0"
+                },
+                "include_patterns": {
+                    "type": "array",
+                    "description": "Glob patterns for files to include",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "exclude_patterns": {
+                    "type": "array",
+                    "description": "Glob patterns for files to exclude",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "chunk_size": {
+                    "type": "integer",
+                    "description": "Maximum size of each chunk in characters",
+                    "default": 1000,
+                    "minimum": 100,
+                    "maximum": 10000
+                },
+                "chunk_overlap": {
+                    "type": "integer",
+                    "description": "Overlap between chunks in characters",
+                    "default": 200,
+                    "minimum": 0,
+                    "maximum": 1000
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for Bedrock operations",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["repository_path"]
+        }
+    },
+    {
+        "name": "search_research_repository",
+        "description": "Perform semantic search within an indexed repository",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "index_path": {
+                    "type": "string",
+                    "description": "Name of the repository or path to the index to search"
+                },
+                "query": {
+                    "type": "string",
+                    "description": "The search query to use for semantic search"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of results to return",
+                    "default": 10,
+                    "minimum": 1,
+                    "maximum": 100
+                },
+                "threshold": {
+                    "type": "number",
+                    "description": "Minimum similarity score threshold (0.0 to 1.0)",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for Bedrock operations",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["index_path", "query"]
+        }
+    },
+    {
+        "name": "access_file",
+        "description": "Access file or directory contents from indexed repositories",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "filepath": {
+                    "type": "string",
+                    "description": "Path to the file or directory to access (format: repository_name/repository/path/to/file)"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["filepath"]
+        }
+    },
+    {
+        "name": "delete_research_repository",
+        "description": "Delete an indexed repository and its associated files",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "repository_name_or_path": {
+                    "type": "string",
+                    "description": "Name of the repository or path to the index to delete"
+                },
+                "index_directory": {
+                    "type": "string",
+                    "description": "Directory to look for indices (optional, uses default if not provided)"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for context",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["repository_name_or_path"]
+        }
+    }
+]

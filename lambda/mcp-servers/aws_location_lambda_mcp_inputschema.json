@@ -1,0 +1,236 @@
+[
+    {
+        "name": "search_places",
+        "description": "Search for places using Amazon Location Service geo-places search_text API",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Search query (address, place name, etc.)"
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of results to return",
+                    "default": 5,
+                    "minimum": 1,
+                    "maximum": 50
+                },
+                "mode": {
+                    "type": "string",
+                    "description": "Output mode: 'summary' (default) or 'raw' for all AWS fields",
+                    "default": "summary",
+                    "enum": ["summary", "raw"]
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for Location Service operations",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "get_place",
+        "description": "Get details for a place using Amazon Location Service geo-places get_place API",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "place_id": {
+                    "type": "string",
+                    "description": "The unique PlaceId for the place"
+                },
+                "mode": {
+                    "type": "string",
+                    "description": "Output mode: 'summary' (default) or 'raw' for all AWS fields",
+                    "default": "summary",
+                    "enum": ["summary", "raw"]
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for Location Service operations",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["place_id"]
+        }
+    },
+    {
+        "name": "reverse_geocode",
+        "description": "Reverse geocode coordinates to an address using Amazon Location Service",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "longitude": {
+                    "type": "number",
+                    "description": "Longitude of the location",
+                    "minimum": -180,
+                    "maximum": 180
+                },
+                "latitude": {
+                    "type": "number",
+                    "description": "Latitude of the location",
+                    "minimum": -90,
+                    "maximum": 90
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for Location Service operations",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["longitude", "latitude"]
+        }
+    },
+    {
+        "name": "search_nearby",
+        "description": "Search for places near a location using Amazon Location Service",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "longitude": {
+                    "type": "number",
+                    "description": "Longitude of the center point",
+                    "minimum": -180,
+                    "maximum": 180
+                },
+                "latitude": {
+                    "type": "number",
+                    "description": "Latitude of the center point",
+                    "minimum": -90,
+                    "maximum": 90
+                },
+                "query": {
+                    "type": "string",
+                    "description": "Optional search query to filter nearby places"
+                },
+                "radius": {
+                    "type": "integer",
+                    "description": "Search radius in meters",
+                    "default": 500,
+                    "minimum": 1,
+                    "maximum": 50000
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of results to return",
+                    "default": 5,
+                    "minimum": 1,
+                    "maximum": 50
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for Location Service operations",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["longitude", "latitude"]
+        }
+    },
+    {
+        "name": "calculate_route",
+        "description": "Calculate a route and return summary info and turn-by-turn directions",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "departure_position": {
+                    "type": "array",
+                    "description": "Departure position as [longitude, latitude]",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "destination_position": {
+                    "type": "array",
+                    "description": "Destination position as [longitude, latitude]",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "travel_mode": {
+                    "type": "string",
+                    "description": "Travel mode for route calculation",
+                    "default": "Car",
+                    "enum": ["Car", "Truck", "Walking", "Bicycle"]
+                },
+                "optimize_for": {
+                    "type": "string",
+                    "description": "Route optimization preference",
+                    "default": "FastestRoute",
+                    "enum": ["FastestRoute", "ShortestRoute"]
+                },
+                "region": {
+                    "type": "string",
+                    "description": "AWS region for Location Service operations",
+                    "default": "us-east-1",
+                    "enum": [
+                        "us-east-1",
+                        "us-east-2",
+                        "us-west-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "eu-west-2",
+                        "eu-central-1",
+                        "ap-southeast-1",
+                        "ap-southeast-2",
+                        "ap-northeast-1"
+                    ]
+                }
+            },
+            "required": ["departure_position", "destination_position"]
+        }
+    }
+]
