@@ -1,0 +1,131 @@
+{
+  "mcp_tools": {
+    "prometheus_query": {
+      "name": "ExecuteQuery",
+      "description": "Execute an instant PromQL query against Amazon Managed Prometheus",
+      "lambda_function_name": "prometheus-query",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "description": "The Prometheus workspace ID to use (e.g., ws-12345678-abcd-1234-efgh-123456789012)"
+          },
+          "query": {
+            "type": "string",
+            "description": "The PromQL query to execute"
+          },
+          "time": {
+            "type": "string",
+            "description": "Optional timestamp for query evaluation (RFC3339 or Unix timestamp)"
+          },
+          "region": {
+            "type": "string",
+            "description": "AWS region (defaults to current region)"
+          }
+        },
+        "required": ["workspace_id", "query"]
+      }
+    },
+    "prometheus_range_query": {
+      "name": "ExecuteRangeQuery",
+      "description": "Execute a PromQL range query over a time period against Amazon Managed Prometheus",
+      "lambda_function_name": "prometheus-range-query",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "description": "The Prometheus workspace ID to use (e.g., ws-12345678-abcd-1234-efgh-123456789012)"
+          },
+          "query": {
+            "type": "string",
+            "description": "The PromQL query to execute"
+          },
+          "start": {
+            "type": "string",
+            "description": "Start timestamp (RFC3339 or Unix timestamp)"
+          },
+          "end": {
+            "type": "string",
+            "description": "End timestamp (RFC3339 or Unix timestamp)"
+          },
+          "step": {
+            "type": "string",
+            "description": "Query resolution step width (duration format, e.g. '15s', '1m', '1h')"
+          },
+          "region": {
+            "type": "string",
+            "description": "AWS region (defaults to current region)"
+          }
+        },
+        "required": ["workspace_id", "query", "start", "end", "step"]
+      }
+    },
+    "prometheus_list_metrics": {
+      "name": "ListMetrics",
+      "description": "Get a list of all metric names available in the Prometheus server",
+      "lambda_function_name": "prometheus-list-metrics",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "description": "The Prometheus workspace ID to use (e.g., ws-12345678-abcd-1234-efgh-123456789012)"
+          },
+          "region": {
+            "type": "string",
+            "description": "AWS region (defaults to current region)"
+          }
+        },
+        "required": ["workspace_id"]
+      }
+    },
+    "prometheus_server_info": {
+      "name": "GetServerInfo",
+      "description": "Get information about the Prometheus server configuration",
+      "lambda_function_name": "prometheus-server-info",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "description": "The Prometheus workspace ID to use (e.g., ws-12345678-abcd-1234-efgh-123456789012)"
+          },
+          "region": {
+            "type": "string",
+            "description": "AWS region (defaults to current region)"
+          }
+        },
+        "required": ["workspace_id"]
+      }
+    },
+    "prometheus_get_available_workspaces": {
+      "name": "GetAvailableWorkspaces",
+      "description": "List all available Prometheus workspaces in the specified region",
+      "lambda_function_name": "prometheus-server-info",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "AWS region (defaults to current region)"
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  "gateway_configuration": {
+    "protocol_type": "MCP",
+    "authorizer_type": "CUSTOM_JWT",
+    "description": "DevOps Agent AgentCore Gateway with Prometheus Lambda Functions",
+    "lambda_integration": {
+      "timeout": 30,
+      "memory_size": 256,
+      "retry_config": {
+        "maximum_retry_attempts": 2
+      }
+    }
+  }
+}

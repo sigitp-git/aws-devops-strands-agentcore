@@ -1,4 +1,21 @@
+# AWS Lambda requirements for Prometheus functions
+# Optimized for AWS Lambda runtime environment
+
+# AWS SDK - usually available in Lambda runtime but pinning version for consistency
 boto3>=1.40.8
 botocore>=1.40.8
+
+# HTTP requests library
 requests>=2.31.0
-urllib3>=1.26.0
+
+# JSON handling (built-in to Python, but listing for completeness)
+# json - built-in
+
+# Time handling (built-in to Python)
+# time - built-in
+
+# Type hints (built-in to Python 3.8+)
+# typing - built-in
+
+# OS environment variables (built-in to Python)
+# os - built-in

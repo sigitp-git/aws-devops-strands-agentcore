@@ -1,55 +1,100 @@
-#!/usr/bin/env python3
+"""AWS Lambda function for metric discovery and listing.
 
-"""
-AWS Lambda function for listing Prometheus metrics
-Handles metric discovery with SigV4 authentication
+This function retrieves all available metric names from Prometheus workspace.
+Lightweight function for metadata operations (256MB, 30s timeout).
+Single responsibility: metric discovery only.
 """
 
-import logging
+import json
+import os
+from typing import Any, Dict
 from prometheus_utils import (
-    validate_credentials, 
-    validate_required_params, 
-    validate_workspace_url,
-    make_request_with_retry,
+    PrometheusClient,
+    get_workspace_details,
+    create_error_response,
     create_success_response,
-    create_error_response
+    validate_required_params
 )
+from consts import DEFAULT_AWS_REGION, DEFAULT_SERVICE_NAME
 
-# Configure logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
-def lambda_handler(event, context):
-    """
-    AWS Lambda handler for listing Prometheus metrics
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """Lambda handler for listing available metrics.
     
-    Expected event structure:
+    Expected event body:
     {
-        "workspace_url": "https://aps-workspaces.region.amazonaws.com/workspaces/ws-xxx",
-        "region": "us-east-1"
+        "workspace_id": "ws-12345678-abcd-1234-efgh-123456789012",
+        "region": "us-east-1" (optional)
+    }
+    
+    Returns:
+    {
+        "statusCode": 200,
+        "body": {
+            "data": {
+                "metrics": [
+                    "go_gc_duration_seconds",
+                    "go_goroutines",
+                    "http_requests_total",
+                    ...
+                ]
+            },
+            "success": true
+        }
     }
     """
     try:
+        print(f'Received event: {json.dumps(event)}')
+        
+        # Handle both direct parameter passing (MCP gateway) and nested body format
+        if 'body' in event and event['body']:
+            # Traditional Lambda invocation with body
+            body = event['body']
+            if isinstance(body, str):
+                body = json.loads(body)
+        else:
+            # Direct parameter passing (MCP gateway format)
+            body = event
+        
         # Validate required parameters
-        validate_required_params(event, ['workspace_url'])
+        required_params = ['workspace_id']
+        missing_params = []
+        for param in required_params:
+            if param not in body or body[param] is None:
+                missing_params.append(param)
         
-        # Validate and clean workspace URL
-        workspace_url = validate_workspace_url(event['workspace_url'])
-        region = event.get('region', 'us-east-1')
+        if missing_params:
+            error_msg = f'Missing required parameters: {", ".join(missing_params)}'
+            return create_error_response(error_msg, 400)
         
-        # Validate credentials
-        validate_credentials()
+        workspace_id = body['workspace_id']
+        region = body.get('region', os.getenv('AWS_REGION', DEFAULT_AWS_REGION))
         
-        # List all available metric names
-        url = f"{workspace_url}/api/v1/label/__name__/values"
-        logger.info("Listing all available metrics")
+        print(f'Listing metrics for workspace: {workspace_id}')
         
-        result = make_request_with_retry('GET', url, region=region)
+        # Get workspace details
+        workspace_config = get_workspace_details(workspace_id, region)
         
-        # Return successful response
-        return create_success_response('list_metrics', result, 
-                                     metric_count=len(result.get('data', [])))
+        # List all available metrics
+        result = PrometheusClient.make_request(
+            prometheus_url=workspace_config['prometheus_url'],
+            endpoint='label/__name__/values',
+            params={},
+            region=region,
+            service_name=DEFAULT_SERVICE_NAME
+        )
         
+        # Sort metrics for better usability
+        metrics = sorted(result) if isinstance(result, list) else []
+        
+        print(f'Retrieved {len(metrics)} metrics successfully')
+        return create_success_response({'metrics': metrics})
+        
+    except ValueError as e:
+        error_msg = f'Validation error: {str(e)}'
+        print(error_msg)
+        return create_error_response(error_msg, 400)
     except Exception as e:
-        logger.error(f"Error in lambda_handler: {str(e)}")
-        return create_error_response(str(e))
+        error_msg = f'Error listing metrics: {str(e)}'
+        print(error_msg)
+        return create_error_response(error_msg, 500)

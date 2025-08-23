@@ -1,291 +1,217 @@
-#!/usr/bin/env python3
-"""
-Prometheus Lambda Integration Layer
+"""Integration layer that routes requests to appropriate specialized functions.
 
-This module provides a unified interface for all Prometheus Lambda functions,
-making it easier to integrate with MCP (Model Context Protocol) and other systems.
-It routes requests to the appropriate specialized Lambda function based on operation type.
-
-Features:
-- Unified interface for all Prometheus operations
-- Automatic function selection based on operation type
-- Backward compatibility with existing applications
-- Error handling and response standardization
-- Support for both direct invocation and MCP integration
+This module maintains backward compatibility with existing applications while
+providing automatic function selection based on operation type.
+Unified interface for all Prometheus operations.
 """
 
 import json
 import boto3
-import logging
-from typing import Dict, Any, Optional
-from enum import Enum
+from typing import Any, Dict, Optional
+from botocore.config import Config
 
-# Configure logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
-class PrometheusOperation(Enum):
-    """Enumeration of supported Prometheus operations."""
-    QUERY = "query"
-    RANGE_QUERY = "range_query"
-    LIST_METRICS = "list_metrics"
-    SERVER_INFO = "server_info"
-    FIND_WORKSPACE = "find_workspace"
-
-class PrometheusLambdaIntegration:
-    """
-    Integration layer for Prometheus Lambda functions.
+class PrometheusLambdaClient:
+    """Client for invoking specialized Prometheus Lambda functions."""
     
-    This class provides a unified interface to all Prometheus Lambda functions,
-    automatically routing requests to the appropriate specialized function.
-    """
-    
-    def __init__(self, region: str = "us-east-1"):
-        """
-        Initialize the integration layer.
-        
-        Args:
-            region: AWS region for Lambda functions
-        """
+    def __init__(self, region: str = 'us-east-1'):
+        """Initialize the client with AWS region."""
         self.region = region
-        self.lambda_client = boto3.client('lambda', region_name=region)
+        self.lambda_client = boto3.client(
+            'lambda',
+            region_name=region,
+            config=Config(user_agent_extra='prometheus-lambda-integration')
+        )
         
         # Function name mappings
         self.function_names = {
-            PrometheusOperation.QUERY: "aws-devops-prometheus-query",
-            PrometheusOperation.RANGE_QUERY: "aws-devops-prometheus-range-query",
-            PrometheusOperation.LIST_METRICS: "aws-devops-prometheus-list-metrics",
-            PrometheusOperation.SERVER_INFO: "aws-devops-prometheus-server-info",
-            PrometheusOperation.FIND_WORKSPACE: "aws-devops-prometheus-find-workspace"
+            'query': 'prometheus-query',
+            'range_query': 'prometheus-range-query',
+            'list_metrics': 'prometheus-list-metrics',
+            'server_info': 'prometheus-server-info'
         }
     
-    def execute_operation(self, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Execute a Prometheus operation by routing to the appropriate Lambda function.
-        
-        Args:
-            operation: The operation to perform (query, range_query, list_metrics, etc.)
-            parameters: Parameters for the operation
-            
-        Returns:
-            Response from the Lambda function
-        """
+    def _invoke_function(self, function_name: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Invoke a specific Lambda function."""
         try:
-            # Validate operation
-            if operation not in [op.value for op in PrometheusOperation]:
-                return {
-                    'statusCode': 400,
-                    'error': f'Unsupported operation: {operation}',
-                    'supported_operations': [op.value for op in PrometheusOperation]
-                }
-            
-            # Get the appropriate function name
-            operation_enum = PrometheusOperation(operation)
-            function_name = self.function_names[operation_enum]
-            
-            logger.info(f"Routing {operation} to function: {function_name}")
-            
-            # Invoke the Lambda function
             response = self.lambda_client.invoke(
                 FunctionName=function_name,
-                Payload=json.dumps(parameters)
+                InvocationType='RequestResponse',
+                Payload=json.dumps({'body': payload})
             )
             
-            # Parse the response
-            response_payload = response['Payload'].read()
-            result = json.loads(response_payload)
+            # Parse response
+            response_payload = json.loads(response['Payload'].read())
             
-            # Add integration metadata
-            if isinstance(result, dict):
-                result['integration_info'] = {
-                    'routed_to': function_name,
-                    'operation': operation,
-                    'integration_layer': 'prometheus-lambda-integration'
-                }
+            if response_payload.get('statusCode') != 200:
+                error_body = json.loads(response_payload.get('body', '{}'))
+                raise RuntimeError(f"Lambda function error: {error_body.get('error', 'Unknown error')}")
             
-            return result
+            # Extract data from response body
+            body = json.loads(response_payload.get('body', '{}'))
+            return body.get('data', {})
             
         except Exception as e:
-            logger.error(f"Error executing operation {operation}: {str(e)}")
-            return {
-                'statusCode': 500,
-                'error': str(e),
-                'operation': operation,
-                'message': 'Integration layer error'
-            }
+            raise RuntimeError(f"Error invoking {function_name}: {str(e)}")
     
-    def query(self, workspace_url: str, query: str, time: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Execute an instant PromQL query.
-        
-        Args:
-            workspace_url: Prometheus workspace URL
-            query: PromQL query string
-            time: Optional timestamp for evaluation
-            
-        Returns:
-            Query results
-        """
-        parameters = {
-            'workspace_url': workspace_url,
-            'query': query
+    def execute_query(
+        self,
+        workspace_id: str,
+        query: str,
+        time: Optional[str] = None,
+        region: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Execute an instant PromQL query."""
+        payload = {
+            'workspace_id': workspace_id,
+            'query': query,
+            'region': region or self.region
         }
         if time:
-            parameters['time'] = time
-            
-        return self.execute_operation('query', parameters)
-    
-    def range_query(self, workspace_url: str, query: str, start: str, end: str, step: str) -> Dict[str, Any]:
-        """
-        Execute a PromQL range query.
+            payload['time'] = time
         
-        Args:
-            workspace_url: Prometheus workspace URL
-            query: PromQL query string
-            start: Start timestamp
-            end: End timestamp
-            step: Query resolution step
-            
-        Returns:
-            Range query results
-        """
-        parameters = {
-            'workspace_url': workspace_url,
+        return self._invoke_function(self.function_names['query'], payload)
+    
+    def execute_range_query(
+        self,
+        workspace_id: str,
+        query: str,
+        start: str,
+        end: str,
+        step: str,
+        region: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Execute a PromQL range query."""
+        payload = {
+            'workspace_id': workspace_id,
             'query': query,
             'start': start,
             'end': end,
-            'step': step
+            'step': step,
+            'region': region or self.region
         }
         
-        return self.execute_operation('range_query', parameters)
+        return self._invoke_function(self.function_names['range_query'], payload)
     
-    def list_metrics(self, workspace_url: str) -> Dict[str, Any]:
-        """
-        List all available metrics.
-        
-        Args:
-            workspace_url: Prometheus workspace URL
-            
-        Returns:
-            List of available metrics
-        """
-        parameters = {
-            'workspace_url': workspace_url
+    def list_metrics(
+        self,
+        workspace_id: str,
+        region: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """List all available metrics."""
+        payload = {
+            'workspace_id': workspace_id,
+            'region': region or self.region
         }
         
-        return self.execute_operation('list_metrics', parameters)
+        return self._invoke_function(self.function_names['list_metrics'], payload)
     
-    def server_info(self, workspace_url: str) -> Dict[str, Any]:
-        """
-        Get server configuration and build information.
-        
-        Args:
-            workspace_url: Prometheus workspace URL
-            
-        Returns:
-            Server information
-        """
-        parameters = {
-            'workspace_url': workspace_url
+    def get_server_info(
+        self,
+        workspace_id: str,
+        region: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get server configuration information."""
+        payload = {
+            'workspace_id': workspace_id,
+            'region': region or self.region
         }
         
-        return self.execute_operation('server_info', parameters)
-    
-    def find_workspace(self, alias: Optional[str] = None, workspace_id: Optional[str] = None, 
-                      list_all: bool = False, region: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Find workspace by alias or ID, or list all workspaces.
-        
-        Args:
-            alias: Workspace alias to search for
-            workspace_id: Workspace ID to find
-            list_all: Whether to list all workspaces
-            region: AWS region
-            
-        Returns:
-            Workspace information
-        """
-        parameters = {}
-        if alias:
-            parameters['alias'] = alias
-        if workspace_id:
-            parameters['workspace_id'] = workspace_id
-        if list_all:
-            parameters['list_all'] = list_all
-        if region:
-            parameters['region'] = region
-            
-        return self.execute_operation('find_workspace', parameters)
+        return self._invoke_function(self.function_names['server_info'], payload)
 
-def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
-    """
-    Lambda handler for the integration layer.
+
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """Main integration handler that routes to appropriate specialized functions.
     
-    This allows the integration layer itself to be deployed as a Lambda function
-    for use in environments where direct SDK access isn't available.
+    This handler maintains backward compatibility while routing requests
+    to the appropriate specialized Lambda function based on operation type.
     
-    Expected event format:
+    Expected event body:
     {
-        "operation": "query|range_query|list_metrics|server_info|find_workspace",
-        "parameters": {
-            // Operation-specific parameters
-        }
+        "operation": "query|range_query|list_metrics|server_info",
+        "workspace_id": "ws-12345678-abcd-1234-efgh-123456789012",
+        "query": "up" (for query operations),
+        "start": "2023-04-01T00:00:00Z" (for range_query),
+        "end": "2023-04-01T01:00:00Z" (for range_query),
+        "step": "5m" (for range_query),
+        "time": "2023-04-01T00:00:00Z" (optional for query),
+        "region": "us-east-1" (optional)
     }
     """
     try:
-        # Extract operation and parameters
-        operation = event.get('operation')
-        parameters = event.get('parameters', {})
+        # Parse request body
+        body = event.get('body', {})
+        if isinstance(body, str):
+            body = json.loads(body)
         
+        operation = body.get('operation')
         if not operation:
             return {
                 'statusCode': 400,
-                'error': 'Missing required field: operation',
-                'supported_operations': [op.value for op in PrometheusOperation]
+                'body': json.dumps({
+                    'error': 'Missing required parameter: operation',
+                    'success': False
+                })
             }
         
-        # Initialize integration layer
-        integration = PrometheusLambdaIntegration()
+        region = body.get('region', 'us-east-1')
+        client = PrometheusLambdaClient(region)
         
-        # Execute the operation
-        result = integration.execute_operation(operation, parameters)
+        # Route to appropriate function based on operation
+        if operation == 'query':
+            result = client.execute_query(
+                workspace_id=body['workspace_id'],
+                query=body['query'],
+                time=body.get('time'),
+                region=region
+            )
+        elif operation == 'range_query':
+            result = client.execute_range_query(
+                workspace_id=body['workspace_id'],
+                query=body['query'],
+                start=body['start'],
+                end=body['end'],
+                step=body['step'],
+                region=region
+            )
+        elif operation == 'list_metrics':
+            result = client.list_metrics(
+                workspace_id=body['workspace_id'],
+                region=region
+            )
+        elif operation == 'server_info':
+            result = client.get_server_info(
+                workspace_id=body['workspace_id'],
+                region=region
+            )
+        else:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({
+                    'error': f'Unknown operation: {operation}',
+                    'success': False
+                })
+            }
         
-        return result
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
+            'body': json.dumps({
+                'data': result,
+                'success': True
+            })
+        }
         
     except Exception as e:
-        logger.error(f"Integration layer error: {str(e)}")
         return {
             'statusCode': 500,
-            'error': str(e),
-            'message': 'Integration layer handler error'
+            'body': json.dumps({
+                'error': f'Integration error: {str(e)}',
+                'success': False
+            })
         }
-
-# Utility functions for direct use
-def create_integration_client(region: str = "us-east-1") -> PrometheusLambdaIntegration:
-    """
-    Create a Prometheus Lambda integration client.
-    
-    Args:
-        region: AWS region
-        
-    Returns:
-        PrometheusLambdaIntegration instance
-    """
-    return PrometheusLambdaIntegration(region)
-
-# Example usage
-if __name__ == "__main__":
-    # Example usage of the integration layer
-    integration = PrometheusLambdaIntegration()
-    
-    # Example: Find all workspaces
-    print("Finding all workspaces...")
-    result = integration.find_workspace(list_all=True)
-    print(json.dumps(result, indent=2))
-    
-    # Example: Execute a query (would need a real workspace URL)
-    # result = integration.query(
-    #     workspace_url="https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-example",
-    #     query="up"
-    # )
-    # print(json.dumps(result, indent=2))

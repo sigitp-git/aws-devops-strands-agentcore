@@ -1,78 +1,97 @@
-#!/usr/bin/env python3
+"""AWS Lambda function for server configuration and build information.
 
-"""
-AWS Lambda function for Prometheus server information
-Handles server configuration and build info retrieval with SigV4 authentication
+This function retrieves Prometheus server status and configuration details.
+Optimized for configuration queries (256MB, 30s timeout).
+Single responsibility: server information only.
 """
 
-import logging
+import json
+import os
+from typing import Any, Dict
 from prometheus_utils import (
-    validate_credentials, 
-    validate_required_params, 
-    validate_workspace_url,
-    make_request_with_retry,
+    get_workspace_details,
+    create_error_response,
     create_success_response,
-    create_error_response
+    validate_required_params
 )
+from consts import DEFAULT_AWS_REGION, DEFAULT_SERVICE_NAME
 
-# Configure logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
-def lambda_handler(event, context):
-    """
-    AWS Lambda handler for Prometheus server information
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """Lambda handler for retrieving server information.
     
-    Expected event structure:
+    Expected event body:
     {
-        "workspace_url": "https://aps-workspaces.region.amazonaws.com/workspaces/ws-xxx",
-        "region": "us-east-1"
+        "workspace_id": "ws-12345678-abcd-1234-efgh-123456789012",
+        "region": "us-east-1" (optional)
+    }
+    
+    Returns:
+    {
+        "statusCode": 200,
+        "body": {
+            "data": {
+                "prometheus_url": "https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-12345678-abcd-1234-efgh-123456789012",
+                "aws_region": "us-east-1",
+                "service_name": "aps",
+                "workspace_id": "ws-12345678-abcd-1234-efgh-123456789012",
+                "workspace_alias": "production",
+                "workspace_status": "ACTIVE"
+            },
+            "success": true
+        }
     }
     """
     try:
+        print(f'Received event: {json.dumps(event)}')
+        
+        # Handle both direct parameter passing (MCP gateway) and nested body format
+        if 'body' in event and event['body']:
+            # Traditional Lambda invocation with body
+            body = event['body']
+            if isinstance(body, str):
+                body = json.loads(body)
+        else:
+            # Direct parameter passing (MCP gateway format)
+            body = event
+        
         # Validate required parameters
-        validate_required_params(event, ['workspace_url'])
+        required_params = ['workspace_id']
+        missing_params = []
+        for param in required_params:
+            if param not in body or body[param] is None:
+                missing_params.append(param)
         
-        # Validate and clean workspace URL
-        workspace_url = validate_workspace_url(event['workspace_url'])
-        region = event.get('region', 'us-east-1')
+        if missing_params:
+            error_msg = f'Missing required parameters: {", ".join(missing_params)}'
+            return create_error_response(error_msg, 400)
         
-        # Validate credentials
-        validate_credentials()
+        workspace_id = body['workspace_id']
+        region = body.get('region', os.getenv('AWS_REGION', DEFAULT_AWS_REGION))
         
-        logger.info("Getting server configuration")
+        print(f'Retrieving server info for workspace: {workspace_id}')
         
-        # Get build info
-        build_info = {}
-        try:
-            build_url = f"{workspace_url}/api/v1/query"
-            build_info = make_request_with_retry('GET', build_url, 
-                                               params={'query': 'prometheus_build_info'}, 
-                                               region=region)
-        except Exception as e:
-            logger.warning(f"Build info not available: {str(e)}")
-            build_info = {"error": f"Build info not available: {str(e)}"}
+        # Get workspace details
+        workspace_config = get_workspace_details(workspace_id, region)
         
-        # Get config (may not be available in managed service)
-        config_info = {}
-        try:
-            config_url = f"{workspace_url}/api/v1/status/config"
-            config_info = make_request_with_retry('GET', config_url, region=region)
-        except Exception as e:
-            logger.warning(f"Config endpoint not available: {str(e)}")
-            config_info = {"error": "Config endpoint not available in managed service"}
-        
-        # Compile server information
-        result = {
-            "build_info": build_info,
-            "config": config_info,
-            "workspace_url": workspace_url,
-            "region": region
+        # Prepare server information response
+        server_info = {
+            'prometheus_url': workspace_config['prometheus_url'],
+            'aws_region': region,
+            'service_name': DEFAULT_SERVICE_NAME,
+            'workspace_id': workspace_id,
+            'workspace_alias': workspace_config.get('alias', 'No alias'),
+            'workspace_status': workspace_config.get('status', 'UNKNOWN')
         }
         
-        # Return successful response
-        return create_success_response('server_info', result)
+        print(f'Server info retrieved successfully for workspace: {workspace_id}')
+        return create_success_response(server_info)
         
+    except ValueError as e:
+        error_msg = f'Validation error: {str(e)}'
+        print(error_msg)
+        return create_error_response(error_msg, 400)
     except Exception as e:
-        logger.error(f"Error in lambda_handler: {str(e)}")
-        return create_error_response(str(e))
+        error_msg = f'Error retrieving server info: {str(e)}'
+        print(error_msg)
+        return create_error_response(error_msg, 500)

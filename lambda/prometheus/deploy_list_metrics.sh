@@ -1,69 +1,16 @@
 #!/bin/bash
 
 # Deploy Prometheus List Metrics Lambda Function
-# Handles metric discovery and listing
+# Single responsibility: metric discovery only
+# Lightweight function for metadata operations (256MB, 30s timeout)
 
 set -e
 
-FUNCTION_NAME="aws-devops-prometheus-list-metrics"
-REGION="us-east-1"
-ROLE_NAME="aws-devops-prometheus-list-metrics-role"
+FUNCTION_NAME="prometheus-list-metrics"
+REGION="${AWS_REGION:-us-east-1}"
+ROLE_NAME="prometheus-lambda-execution-role"
 
 echo "Deploying Prometheus List Metrics Lambda Function..."
-echo "==================================================="
-
-# Create IAM role if it doesn't exist
-echo "Creating IAM role: $ROLE_NAME"
-aws iam create-role \
-    --role-name $ROLE_NAME \
-    --assume-role-policy-document '{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": {
-                    "Service": "lambda.amazonaws.com"
-                },
-                "Action": "sts:AssumeRole"
-            }
-        ]
-    }' \
-    --region $REGION 2>/dev/null || echo "Role already exists"
-
-# Attach basic Lambda execution policy
-aws iam attach-role-policy \
-    --role-name $ROLE_NAME \
-    --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole \
-    --region $REGION 2>/dev/null || echo "Policy already attached"
-
-# Create and attach Prometheus access policy
-aws iam put-role-policy \
-    --role-name $ROLE_NAME \
-    --policy-name PrometheusListMetricsAccess \
-    --policy-document '{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "aps:QueryMetrics",
-                    "aps:GetLabels",
-                    "aps:GetSeries",
-                    "aps:GetMetricMetadata"
-                ],
-                "Resource": "*"
-            }
-        ]
-    }' \
-    --region $REGION
-
-# Get role ARN
-ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text --region $REGION)
-echo "Using role: $ROLE_ARN"
-
-# Wait for role to be available
-echo "Waiting for IAM role to be available..."
-sleep 10
 
 # Create deployment package
 echo "Creating deployment package..."
@@ -73,17 +20,29 @@ mkdir -p lambda_package
 # Copy function code and utilities
 cp lambda_list_metrics.py lambda_package/
 cp prometheus_utils.py lambda_package/
+cp consts.py lambda_package/
 
 # Install dependencies
+echo "Installing dependencies..."
 pip install -r lambda_requirements.txt -t lambda_package/
 
-# Create ZIP package
+# Create deployment zip
 cd lambda_package
 zip -r ../prometheus-list-metrics-deployment.zip .
 cd ..
 
-# Deploy or update Lambda function
-echo "Deploying Lambda function: $FUNCTION_NAME"
+# Get IAM role ARN
+ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query 'Role.Arn' --output text 2>/dev/null || echo "")
+
+if [ -z "$ROLE_ARN" ]; then
+    echo "Error: IAM role $ROLE_NAME not found. Please create it first using:"
+    echo "cd ../../iampolicies && ./create-iam-roles.sh"
+    exit 1
+fi
+
+echo "Using IAM role: $ROLE_ARN"
+
+# Check if function exists
 if aws lambda get-function --function-name $FUNCTION_NAME --region $REGION >/dev/null 2>&1; then
     echo "Updating existing function..."
     aws lambda update-function-code \
@@ -93,10 +52,10 @@ if aws lambda get-function --function-name $FUNCTION_NAME --region $REGION >/dev
     
     aws lambda update-function-configuration \
         --function-name $FUNCTION_NAME \
-        --handler lambda_list_metrics.lambda_handler \
         --runtime python3.9 \
-        --timeout 30 \
+        --handler lambda_list_metrics.lambda_handler \
         --memory-size 256 \
+        --timeout 30 \
         --region $REGION
 else
     echo "Creating new function..."
@@ -106,20 +65,17 @@ else
         --role $ROLE_ARN \
         --handler lambda_list_metrics.lambda_handler \
         --zip-file fileb://prometheus-list-metrics-deployment.zip \
-        --timeout 30 \
         --memory-size 256 \
-        --description "Prometheus list metrics Lambda function" \
+        --timeout 30 \
+        --description "Prometheus metrics listing Lambda function - lightweight metadata operations" \
         --region $REGION
 fi
 
 # Clean up
 rm -rf lambda_package prometheus-list-metrics-deployment.zip
 
-echo ""
-echo "Deployment completed successfully!"
-echo "Function Name: $FUNCTION_NAME"
+echo "Prometheus List Metrics Lambda function deployed successfully!"
+echo "Function name: $FUNCTION_NAME"
 echo "Region: $REGION"
-echo ""
-echo "Test the function with:"
-echo "aws lambda invoke --function-name $FUNCTION_NAME --payload '{\"workspace_url\":\"YOUR_WORKSPACE_URL\"}' response.json"
-echo ""
+echo "Memory: 256MB"
+echo "Timeout: 30s"

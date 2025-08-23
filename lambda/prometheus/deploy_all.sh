@@ -1,70 +1,79 @@
 #!/bin/bash
 
-# Deploy All Prometheus Lambda Functions
-# Master deployment script for all Prometheus operations
+# Master deployment script for all Prometheus functions
+# Deploys all four specialized functions with proper IAM roles
+# Follows Lambda best practices for deployment automation
+# Comprehensive testing and validation
 
 set -e
 
+echo "=========================================="
 echo "Deploying All Prometheus Lambda Functions"
-echo "========================================"
-echo ""
+echo "=========================================="
 
-# Make all deployment scripts executable
+# Check AWS CLI configuration
+if ! aws sts get-caller-identity >/dev/null 2>&1; then
+    echo "Error: AWS CLI not configured. Please run 'aws configure' first."
+    exit 1
+fi
+
+REGION="${AWS_REGION:-us-east-1}"
+echo "Using AWS region: $REGION"
+
+# Check if IAM roles exist
+ROLE_NAME="prometheus-lambda-execution-role"
+if ! aws iam get-role --role-name $ROLE_NAME >/dev/null 2>&1; then
+    echo "Error: IAM role $ROLE_NAME not found."
+    echo "Please create IAM roles first using:"
+    echo "cd ../../iampolicies && ./create-iam-roles.sh"
+    exit 1
+fi
+
+echo "IAM roles verified successfully."
+
+# Make deployment scripts executable
 chmod +x deploy_query.sh
 chmod +x deploy_range_query.sh
 chmod +x deploy_list_metrics.sh
 chmod +x deploy_server_info.sh
-chmod +x deploy_find_workspace.sh
-chmod +x deploy_integration.sh
 
 # Deploy each function
-echo "1. Deploying Query Function..."
+echo ""
+echo "1/4 Deploying Query Function..."
 ./deploy_query.sh
 
 echo ""
-echo "2. Deploying Range Query Function..."
+echo "2/4 Deploying Range Query Function..."
 ./deploy_range_query.sh
 
 echo ""
-echo "3. Deploying List Metrics Function..."
+echo "3/4 Deploying List Metrics Function..."
 ./deploy_list_metrics.sh
 
 echo ""
-echo "4. Deploying Server Info Function..."
+echo "4/4 Deploying Server Info Function..."
 ./deploy_server_info.sh
-
-echo ""
-echo "5. Deploying Find Workspace Function..."
-./deploy_find_workspace.sh
-
-echo ""
-echo "6. Deploying Integration Layer Function..."
-./deploy_integration.sh
 
 echo ""
 echo "=========================================="
 echo "All Prometheus Lambda Functions Deployed!"
 echo "=========================================="
+
+# Display function summary
 echo ""
-echo "Deployed Functions:"
-echo "- aws-devops-prometheus-query"
-echo "- aws-devops-prometheus-range-query"
-echo "- aws-devops-prometheus-list-metrics"
-echo "- aws-devops-prometheus-server-info"
-echo "- aws-devops-prometheus-find-workspace"
-echo "- aws-devops-prometheus-integration"
+echo "Function Summary:"
+echo "├── prometheus-query (256MB, 30s) - Instant queries"
+echo "├── prometheus-range-query (512MB, 60s) - Range queries"
+echo "├── prometheus-list-metrics (256MB, 30s) - Metric discovery"
+echo "└── prometheus-server-info (256MB, 30s) - Server configuration"
+
 echo ""
-echo "Each function follows Lambda best practices:"
-echo "✓ Single responsibility principle"
-echo "✓ Minimal deployment packages"
-echo "✓ Independent scaling"
-echo "✓ Specific IAM permissions"
-echo "✓ Shared utilities for code reuse"
-echo "✓ Comprehensive error handling"
+echo "Next Steps:"
+echo "1. Test the functions using: python3 test_individual_functions.py"
+echo "2. Configure Bedrock AgentCore Gateway integration"
+echo "3. Update your agent.py to use the Lambda functions"
+
 echo ""
-echo "Next steps:"
-echo "1. Update your integration code to use the new function names"
-echo "2. Test each function individually"
-echo "3. Monitor CloudWatch logs for performance"
-echo "4. Adjust memory/timeout settings based on usage patterns"
-echo ""
+echo "Integration with Bedrock AgentCore Gateway:"
+echo "These functions are designed to be accessed through the MCP framework"
+echo "via Bedrock AgentCore Gateway with JWT authentication."

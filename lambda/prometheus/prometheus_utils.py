@@ -1,204 +1,224 @@
-#!/usr/bin/env python3
+"""Shared utilities for Prometheus Lambda functions.
 
-"""
-Shared utilities for Prometheus Lambda functions
-Common functions for SigV4 authentication and HTTP requests
+This module provides common functionality for AWS SigV4 authentication, security validation,
+and Prometheus API interactions.
 """
 
 import json
-import boto3
-import requests
+import os
 import time
-import logging
-from datetime import datetime, timezone
-from urllib.parse import urlencode
+import requests
+import boto3
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
+from botocore.config import Config
 from botocore.exceptions import ClientError, NoCredentialsError
+from typing import Any, Dict, Optional, List
+from consts import (
+    DEFAULT_AWS_REGION,
+    DEFAULT_SERVICE_NAME,
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_RETRY_DELAY,
+    API_VERSION_PATH,
+    DANGEROUS_PATTERNS
+)
 
-logger = logging.getLogger(__name__)
 
-# Initialize AWS session outside for reuse
-session = boto3.Session()
-credentials = session.get_credentials()
-
-def validate_credentials():
-    """Validate AWS credentials are available"""
-    if not credentials:
-        raise NoCredentialsError("AWS credentials not found")
-
-def sign_request(method, url, params=None, data=None, region='us-east-1'):
-    """
-    Sign request with AWS SigV4 authentication
+class SecurityValidator:
+    """Security validation utilities."""
     
-    Args:
-        method: HTTP method (GET, POST)
-        url: Request URL
-        params: Query parameters
-        data: Request body data
-        region: AWS region
-        
-    Returns:
-        Signed AWSRequest object
-    """
-    if params:
-        url += '?' + urlencode(params)
+    @staticmethod
+    def validate_string(value: str, context: str = 'value') -> bool:
+        """Validate a string for potential security issues."""
+        if not isinstance(value, str):
+            return True
+            
+        for pattern in DANGEROUS_PATTERNS:
+            if pattern in value:
+                print(f'Potentially dangerous {context} detected: {pattern}')
+                return False
+        return True
     
-    request = AWSRequest(method=method, url=url, data=data)
-    SigV4Auth(credentials, 'aps', region).add_auth(request)
-    return request
+    @staticmethod
+    def validate_params(params: Dict) -> bool:
+        """Validate request parameters for security issues."""
+        if not params:
+            return True
+            
+        for key, value in params.items():
+            if isinstance(value, str) and not SecurityValidator.validate_string(value, f'parameter {key}'):
+                return False
+        return True
 
-def make_request_with_retry(method, url, params=None, data=None, region='us-east-1', max_retries=3):
-    """
-    Make HTTP request with exponential backoff retry logic
+
+class PrometheusClient:
+    """Client for interacting with Prometheus API with AWS SigV4 authentication."""
     
-    Args:
-        method: HTTP method
-        url: Request URL
-        params: Query parameters
-        data: Request body
-        region: AWS region
-        max_retries: Maximum number of retries
+    @staticmethod
+    def make_request(
+        prometheus_url: str,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        region: str = DEFAULT_AWS_REGION,
+        profile: Optional[str] = None,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        retry_delay: int = DEFAULT_RETRY_DELAY,
+        service_name: str = DEFAULT_SERVICE_NAME,
+    ) -> Any:
+        """Make authenticated request to Prometheus API."""
         
-    Returns:
-        Response JSON data
+        if not prometheus_url:
+            raise ValueError('Prometheus URL not configured')
         
-    Raises:
-        Exception: If all retries are exhausted
-    """
-    for attempt in range(max_retries + 1):
-        try:
-            # Sign the request
-            signed_request = sign_request(method, url, params, data, region)
+        # Security validation
+        if not isinstance(endpoint, str) or not SecurityValidator.validate_string(endpoint, 'endpoint'):
+            raise ValueError('Invalid endpoint')
             
-            # Prepare headers
-            headers = dict(signed_request.headers)
-            headers['Content-Type'] = 'application/x-www-form-urlencoded'
-            
-            # Make the request
-            response = requests.request(
-                method=signed_request.method,
-                url=signed_request.url,
-                headers=headers,
-                data=signed_request.body,
-                timeout=30
-            )
-            
-            # Check for successful response
-            if response.status_code == 200:
-                return response.json()
-            elif response.status_code == 429:  # Rate limited
-                if attempt < max_retries:
-                    wait_time = (2 ** attempt) + (time.time() % 1)  # Exponential backoff with jitter
-                    logger.warning(f"Rate limited, retrying in {wait_time:.2f} seconds...")
-                    time.sleep(wait_time)
-                    continue
-            else:
-                response.raise_for_status()
+        if params and not SecurityValidator.validate_params(params):
+            raise ValueError('Invalid parameters: potentially dangerous values detected')
+        
+        # Build URL
+        base_url = prometheus_url
+        if not base_url.endswith(API_VERSION_PATH):
+            base_url = f'{base_url.rstrip("/")}{API_VERSION_PATH}'
+        url = f'{base_url}/{endpoint.lstrip("/")}'
+        
+        # Retry logic
+        retry_count = 0
+        last_exception = None
+        
+        while retry_count < max_retries:
+            try:
+                # Create session and credentials
+                session = boto3.Session(profile_name=profile, region_name=region)
+                credentials = session.get_credentials()
+                if not credentials:
+                    raise ValueError('AWS credentials not found')
                 
-        except requests.exceptions.RequestException as e:
-            if attempt < max_retries:
-                wait_time = (2 ** attempt) + (time.time() % 1)
-                logger.warning(f"Request failed (attempt {attempt + 1}), retrying in {wait_time:.2f} seconds: {str(e)}")
-                time.sleep(wait_time)
-                continue
-            else:
-                raise e
-    
-    raise Exception(f"Max retries ({max_retries}) exceeded")
-
-def create_success_response(operation, data, **kwargs):
-    """
-    Create standardized success response
-    
-    Args:
-        operation: Operation name
-        data: Response data
-        **kwargs: Additional fields to include
+                # Create and sign request
+                aws_request = AWSRequest(method='GET', url=url, params=params or {})
+                SigV4Auth(credentials, service_name, region).add_auth(aws_request)
+                
+                # Convert to requests format
+                prepared_request = requests.Request(
+                    method=aws_request.method,
+                    url=aws_request.url,
+                    headers=dict(aws_request.headers),
+                    params=params or {},
+                ).prepare()
+                
+                # Send request
+                with requests.Session() as req_session:
+                    response = req_session.send(prepared_request)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if data['status'] != 'success':
+                        error_msg = data.get('error', 'Unknown error')
+                        raise RuntimeError(f'Prometheus API request failed: {error_msg}')
+                    
+                    return data['data']
+                    
+            except (requests.RequestException, json.JSONDecodeError) as e:
+                last_exception = e
+                retry_count += 1
+                if retry_count < max_retries:
+                    retry_delay_seconds = retry_delay * (2 ** (retry_count - 1))
+                    print(f'Request failed: {e}. Retrying in {retry_delay_seconds}s...')
+                    time.sleep(retry_delay_seconds)
+                else:
+                    print(f'Request failed after {max_retries} attempts: {e}')
+                    raise
         
-    Returns:
-        Lambda response dictionary
-    """
-    response_body = {
-        'success': True,
-        'operation': operation,
-        'timestamp': datetime.now(timezone.utc).isoformat(),
-        'data': data
-    }
-    
-    # Add any additional fields
-    response_body.update(kwargs)
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-        },
-        'body': json.dumps(response_body, default=str)
-    }
+        if last_exception:
+            raise last_exception
+        return None
 
-def create_error_response(error_message, status_code=500):
-    """
-    Create standardized error response
-    
-    Args:
-        error_message: Error message string
-        status_code: HTTP status code
-        
-    Returns:
-        Lambda error response dictionary
-    """
+
+def get_workspace_details(workspace_id: str, region: str = DEFAULT_AWS_REGION) -> Dict[str, Any]:
+    """Get details for a specific Prometheus workspace using DescribeWorkspace API."""
+    config = Config(user_agent_extra='prometheus-lambda-function')
+    session = boto3.Session(region_name=region)
+    aps_client = session.client('amp', config=config)
+
+    try:
+        response = aps_client.describe_workspace(workspaceId=workspace_id)
+        workspace = response.get('workspace', {})
+
+        prometheus_url = workspace.get('prometheusEndpoint')
+        if not prometheus_url:
+            raise ValueError(f'No prometheusEndpoint found in workspace response for {workspace_id}')
+
+        return {
+            'workspace_id': workspace_id,
+            'alias': workspace.get('alias', 'No alias'),
+            'status': workspace.get('status', {}).get('statusCode', 'UNKNOWN'),
+            'prometheus_url': prometheus_url,
+            'region': region,
+        }
+    except Exception as e:
+        print(f'Error in DescribeWorkspace API: {str(e)}')
+        raise
+
+
+def create_error_response(error_message: str, status_code: int = 500) -> Dict[str, Any]:
+    """Create a standardized error response."""
     return {
         'statusCode': status_code,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
         },
         'body': json.dumps({
-            'success': False,
-            'error': str(error_message),
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'error': error_message,
+            'success': False
         })
     }
 
-def validate_workspace_url(workspace_url):
-    """
-    Validate AWS Managed Prometheus workspace URL format
-    
-    Args:
-        workspace_url: Workspace URL to validate
-        
-    Returns:
-        Cleaned workspace URL (without trailing slash)
-        
-    Raises:
-        ValueError: If URL format is invalid
-    """
-    if not workspace_url:
-        raise ValueError("Workspace URL is required")
-    
-    # Expected format: https://aps-workspaces.{region}.amazonaws.com/workspaces/{workspace-id}
-    import re
-    pattern = r'^https://aps-workspaces\.[a-z0-9-]+\.amazonaws\.com/workspaces/ws-[a-f0-9-]+$'
-    
-    cleaned_url = workspace_url.rstrip('/')
-    if not re.match(pattern, cleaned_url):
-        raise ValueError(f"Invalid workspace URL format: {workspace_url}")
-    
-    return cleaned_url
 
-def validate_required_params(event, required_params):
-    """
-    Validate required parameters are present in event
+def create_success_response(data: Any) -> Dict[str, Any]:
+    """Create a standardized success response."""
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+        },
+        'body': json.dumps({
+            'data': data,
+            'success': True
+        })
+    }
+
+
+def validate_required_params(event: Dict, required_params: List[str]) -> Optional[str]:
+    """Validate that required parameters are present in the event.
     
-    Args:
-        event: Lambda event dictionary
-        required_params: List of required parameter names
-        
-    Raises:
-        ValueError: If any required parameters are missing
+    Handles both direct parameter passing (MCP gateway) and nested body format.
     """
-    missing_params = [p for p in required_params if p not in event]
+    # Handle both direct parameter passing (MCP gateway) and nested body format
+    if 'body' in event and event['body']:
+        # Traditional Lambda invocation with body
+        body = event['body']
+        if isinstance(body, str):
+            try:
+                body = json.loads(body)
+            except json.JSONDecodeError:
+                return 'Invalid JSON in request body'
+    else:
+        # Direct parameter passing (MCP gateway format)
+        body = event
+    
+    missing_params = []
+    for param in required_params:
+        if param not in body or body[param] is None:
+            missing_params.append(param)
+    
     if missing_params:
-        raise ValueError(f"Missing required parameters: {', '.join(missing_params)}")
+        return f'Missing required parameters: {", ".join(missing_params)}'
+    
+    return None
